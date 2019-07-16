@@ -396,9 +396,54 @@ bool TcpClient::connectSocket(int &returncode)
 	return true;
 }
 
-void TcpClient::switchToSecureMode()
+bool TcpClient::switchToSecureMode()
 {
+	_SocketReference->_RequireSSL = true;
 
+	_SocketReference->_CertificateBIO = BIO_new(BIO_s_file());
+
+	if (SSL_library_init() < 0)
+	{
+		return false;
+	}
+
+	_SocketReference->_SSLMethod = SSLv23_client_method();
+
+	if ((_SocketReference->_SSLContext = SSL_CTX_new(_SocketReference->_SSLMethod)) == nullptr)
+	{
+		return false;
+	}
+
+	SSL_CTX_set_options(_SocketReference->_SSLContext, SSL_OP_NO_SSLv2);
+
+	_SocketReference->_SSLSession = SSL_new(_SocketReference->_SSLContext);
+
+	SSL_set_fd(_SocketReference->_SSLSession, _SocketReference->_Socket);
+
+	if (SSL_connect(_SocketReference->_SSLSession) != 1)
+	{
+		SSL_free(_SocketReference->_SSLSession);
+		shutdown(_SocketReference->_Socket, 2);
+		closesocket(_SocketReference->_Socket);
+		X509_free(_SocketReference->_Certificate);
+		SSL_CTX_free(_SocketReference->_SSLContext);
+		_SocketReference->_Connected = false;
+
+		return false;
+	}
+
+	_SocketReference->_Certificate = SSL_get_peer_certificate(_SocketReference->_SSLSession);
+
+	if (_SocketReference->_Certificate != nullptr)
+	{
+		_SocketReference->_CertificateName = X509_NAME_new();
+		_SocketReference->_CertificateName = X509_get_subject_name(_SocketReference->_Certificate);
+		_SocketReference->_CertificateNamePrintable = X509_NAME_oneline(_SocketReference->_CertificateName, 0, 0);
+	}
+
+	_SocketReference->_Connected = true;
+
+	return true;
 }
 
 bool TcpClient::closeSocket()
@@ -511,6 +556,36 @@ bool TcpClient::receiveString(std::string &ioStr, const char *delimeter)
 			return true;
 		}
 	}
+	return true;
+}
+
+bool TcpClient::receiveString(std::string& ioStr)
+{
+	char	buffer[1024];
+	long	returnvalue;
+	std::string	data;
+
+	memset(&buffer[0], 0, 1024);
+
+	if (_SocketReference->_RequireSSL)
+	{
+		returnvalue = SSL_read(_SocketReference->_SSLSession, &buffer[0], 1024);
+	}
+	else
+	{
+		returnvalue = recv(_SocketReference->_Socket, &buffer[0], 1024, 0);
+	}
+
+	if (returnvalue < 1)
+	{
+		int error = socketerror;
+		ioStr.clear();
+		_SocketReference->_Connected = false;
+		return false;
+	}
+
+	ioStr = buffer;
+
 	return true;
 }
 

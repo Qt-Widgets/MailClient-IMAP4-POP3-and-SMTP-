@@ -18,6 +18,9 @@ public:
     void setAccountInformation(const std::string host, uint16_t port, std::string username, std::string password, char sectype, bool sendhelo = false);
     bool connect();
     bool sendHelo();
+	bool startTls();
+	bool needTls();
+	bool login();
     bool sendMail(MailHeader &ehdr, MailBody &ebdy);
     std::string account();
 	std::string error();
@@ -28,7 +31,8 @@ private:
     std::string _Password;
 	uint16_t _Port;
     bool _SendHelo;
-    char _SecurityType;    
+    char _SecurityType;
+	bool _StartTls;
 	
 	std::string _Error;
     MailHeader _EmlHdr;

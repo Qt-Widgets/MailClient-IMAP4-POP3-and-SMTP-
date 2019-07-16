@@ -25,7 +25,7 @@ public:
 	void setPacketDelimeter(char* str);
 	void setPacketLength(long len);
 
-	void switchToSecureMode();
+	bool switchToSecureMode();
 
 	std::string* certificateName();
 
@@ -34,6 +34,7 @@ public:
 
 	bool receiveBuffer(int len);
 	bool receiveString(std::string &ioStr, const char* delimeter);
+	bool receiveString(std::string& ioStr);
 
 	unsigned long getSocket();
 

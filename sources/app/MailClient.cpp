@@ -1,5 +1,6 @@
 #include "MailClient.h"
 #include "./utils/StringEx.h"
+#include <iostream>
 
 MailClient* mailClientPtr = nullptr;
 
@@ -63,42 +64,4 @@ void MailClient::PurgeDeleted(std::string& str)
 
 void MailClient::Test()
 {
-	//ImapClient climap;
-
-	//climap.setAccountInformation("imap-mail.outlook.com", 993, "subratoroy@hotmail.com", "Silveroak@1974", 'S');
-
-	//if (climap.connect())
-	//{
-	//	if (climap.getCapabilities())
-	//	{
-	//		if (climap.login())
-	//		{
-	//			std::vector<std::string> dlist;
-
-	//			if (climap.getDirectoryList(dlist))
-	//			{
-	//				unsigned long count, uidnext;
-
-	//				if (climap.getDirectory("INBOX", count, uidnext))
-	//				{
-	//					if (climap.getMessageHeader(count - 1))
-	//					{
-	//						climap.getMessageBody(count - 1);
-	//					}
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
-
-    SmtpClient clsmtp;
-    clsmtp.setAccountInformation("smtp-mail.outlook.com", 587, "subratoroy@hotmail.com", "Silveroak@1974", 'N');
-
-    if (clsmtp.connect())
-	{
-        if (clsmtp.sendHelo())
-		{
-		}
-	}
-
 }

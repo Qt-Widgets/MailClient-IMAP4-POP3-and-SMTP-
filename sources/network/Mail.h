@@ -52,7 +52,6 @@ public:
     std::string messageId();
 
     void serialize(std::string &str);
-	void serialize(std::vector<std::string>& datalines);
     void deSerialize();
 
     bool hasMimeData();
@@ -124,7 +123,6 @@ public:
     std::string account();
 
     void serialize(std::string &str, MailBody *bodyptr);
-	void serialize(std::vector<std::string> &datalines, MailBody* bodyptr);
 	void deSerialize();
 
     void normalizeAddresses();
