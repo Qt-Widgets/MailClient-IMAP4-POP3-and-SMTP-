@@ -16,6 +16,8 @@ public:
     SmtpClient(const std::string host, uint16_t port, std::string username, std::string password, char sectype, bool sendhelo = false);
     ~SmtpClient();
     void setAccountInformation(const std::string host, uint16_t port, std::string username, std::string password, char sectype, bool sendhelo = false);
+    bool connect();
+    bool sendHelo();
     bool sendMail(MailHeader &ehdr, MailBody &ebdy);
     std::string account();
 	std::string error();

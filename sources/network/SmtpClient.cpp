@@ -56,6 +56,51 @@ void SmtpClient::setAccountInformation(const std::string host, uint16_t port, st
     return;
 }
 
+bool SmtpClient::connect()
+{
+    int retcode;
+    if (_BearerPtr->cl.createSocket(_Host.c_str(), _Port, false))
+    {
+        if (_BearerPtr->cl.connectSocket(retcode))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool SmtpClient::sendHelo()
+{
+    std::string resp;
+    std::string my_ip = "123.201.90.94";
+    char buff[128] = { 0 };
+    sprintf(buff, "EHLO %s\r\n", my_ip.c_str());
+
+    std::string helo = buff;
+    _BearerPtr->cl.sendString(helo);
+
+    while (true)
+    {
+        if (!_BearerPtr->cl.receiveString(resp, "\r\n"))
+        {
+            return false;
+        }
+
+        if (resp.length() < 1)
+        {
+            return true;
+        }
+
+        if(_BearerPtr->cl.pendingPreFetchedBufferSize() < 1)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 std::string SmtpClient::account()
 {
     return _Username;

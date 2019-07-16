@@ -1,6 +1,5 @@
 #include "MailClient.h"
 #include "./utils/StringEx.h"
-#include "./network/TcpClient.h"
 
 MailClient* mailClientPtr = nullptr;
 
@@ -92,18 +91,13 @@ void MailClient::Test()
 	//	}
 	//}
 
-    TcpClient cl;
-    std::string my_ip;
+    SmtpClient clsmtp;
+    clsmtp.setAccountInformation("smtp-mail.outlook.com", 587, "subratoroy@hotmail.com", "Silveroak@1974", 'N');
 
-	char buff[128] = { 0 };
-
-    if (cl.createSocket("smtp-mail.outlook.com", 587))
+    if (clsmtp.connect())
 	{
-		int retcode = 0;
-		if (cl.connectSocket(retcode))
+        if (clsmtp.sendHelo())
 		{
-			sprintf(buff, "EHLO %s\r\n", my_ip.c_str());
-
 		}
 	}
 
