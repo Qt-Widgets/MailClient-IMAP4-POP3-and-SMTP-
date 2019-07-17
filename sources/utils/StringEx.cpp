@@ -249,7 +249,12 @@ void stralltrim(std::string &str)
 
     for(int i = len-1;  ; i--)
     {
-        if(!isspace(buffer[i]) || i < 0)
+		if (i < 0)
+		{
+			break;
+		}
+		
+		if(!isspace(buffer[i]))
         {
             break;
         }

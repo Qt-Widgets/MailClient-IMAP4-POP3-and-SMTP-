@@ -1,0 +1,71 @@
+void MailClient::Test()
+{
+	ImapClient climap;
+
+	climap.setAccountInformation("imap-mail.outlook.com", 993, "subratoroy@hotmail.com", "Silveroak@1974", 'S');
+
+	if (climap.connect())
+	{
+		if (climap.getCapabilities())
+		{
+			if (climap.login())
+			{
+				std::vector<std::string> dlist;
+
+				if (climap.getDirectoryList(dlist))
+				{
+					unsigned long count, uidnext;
+
+					if (climap.getDirectory("INBOX", count, uidnext))
+					{
+						if (climap.getMessageHeader(count - 1))
+						{
+							climap.getMessageBody(count - 1);
+						}
+					}
+				}
+			}
+		}
+	}
+
+    SmtpClient clsmtp;
+    clsmtp.setAccountInformation("smtp-mail.outlook.com", 587, "subratoroy@hotmail.com", "Silveroak@1974", 'N');
+
+    if (clsmtp.connect())
+	{
+        if (clsmtp.sendHelo())
+		{
+			if (clsmtp.needTls())
+			{
+				if (clsmtp.startTls())
+				{
+					if (clsmtp.sendHelo())
+					{
+						if (clsmtp.login())
+						{
+							MailHeader hdr;
+							MailBody bdy;
+
+							std::string serialized_header;
+							std::string serialized_body;
+
+							hdr.setFrom("subratoroy@hotmail.com");
+							hdr.setAccount("subratoroy@hotmail.com");
+							hdr.addtoToList("sriiixi@gmail.com");
+							hdr.addtoCcList("subrato.roy@collabera.com");
+							hdr.setSubject("Another Test Message");
+							hdr.serialize(serialized_header, nullptr);
+
+							bdy.setMessage("Text body as test message .....");
+							bdy.setMessageId(hdr.messageId());
+							bdy.serialize(serialized_body);
+
+							clsmtp.sendMail(hdr, bdy);
+						}
+					}
+				}
+			}
+		}
+	}
+
+}

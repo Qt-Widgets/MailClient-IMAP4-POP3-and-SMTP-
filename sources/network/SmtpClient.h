@@ -16,7 +16,9 @@ public:
     SmtpClient(const std::string host, uint16_t port, std::string username, std::string password, char sectype, bool sendhelo = false);
     ~SmtpClient();
     void setAccountInformation(const std::string host, uint16_t port, std::string username, std::string password, char sectype, bool sendhelo = false);
-    bool connect();
+	void setPublicIp(std::string& ip);
+	bool disconnect();
+	bool connect();
     bool sendHelo();
 	bool startTls();
 	bool needTls();
@@ -33,6 +35,7 @@ private:
     bool _SendHelo;
     char _SecurityType;
 	bool _StartTls;
+	std::string _PublicIp;
 	
 	std::string _Error;
     MailHeader _EmlHdr;

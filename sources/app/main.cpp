@@ -1,5 +1,6 @@
 #include "MailClient.h"
 #include "./utils/Directory.h"
+#include "./utils/StringEx.h"
 
 int main(int argc, char *argv[])
 {
@@ -11,7 +12,7 @@ int main(int argc, char *argv[])
 	}
 
     //app->Start();
-	app->Test();
+	app->TestIn();
 
     return 0;
 }

@@ -21,7 +21,9 @@ public:
     virtual ~MailClient();
     void Start();
 	bool Initialize();
-	void Test();
+	void TestIn();
+	void TestOut();
+
 private:
 	void GetProfileList();
 	void GetProfileInformation(std::string &str);

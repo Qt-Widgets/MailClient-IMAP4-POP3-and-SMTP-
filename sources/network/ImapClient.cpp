@@ -91,6 +91,16 @@ bool ImapClient::connect()
 	return false;
 }
 
+bool ImapClient::disconnect()
+{
+	if (_BearerPtr->cl.isConnected())
+	{
+		return _BearerPtr->cl.closeSocket();
+	}
+
+	return false;
+}
+
 bool ImapClient::getCapabilities()
 {
 	std::string resp;
@@ -192,45 +202,35 @@ bool ImapClient::getDirectoryList(std::vector<std::string>& dirList)
 			return false;
 		}
 
-		dirList.push_back(resp);
+		if (strcontains(resp.c_str(), "HasChildren") || strcontains(resp.c_str(), "Sync Issue"))
+		{
+			continue;
+		}
 
-		if (strcontains(resp.c_str(), "LS OK"))
+		std::vector<std::string> templist;
+
+		if (strcontains(resp.c_str(), "\".\""))
+		{
+			strsplit(resp, templist, "\".\"", true);
+			resp = templist[templist.size() -1];
+		}
+
+		if (strcontains(resp.c_str(), "\"/\""))
+		{
+			strsplit(resp, templist, "\"/\"", true);
+			resp = templist[templist.size() - 1];
+		}
+
+		if (strcontains(resp.c_str(), "LS OK") || strcontains(resp.c_str(), "LIST completed"))
 		{
 			result = true;
 			break;
-		}
+		}		
+		
+		dirList.push_back(resp);
 	}
 
 	return result;
-
-	//_CurrentUrl = _Url;
-	//std::string imapData;
-
-	//if (bearerFunction(imapData))
-	//{
-	//	if (strsubstringpos(_Url.c_str(), "gmail") > -1)
-	//	{
-	//		normalizeGmailDirList(imapData, dirList);
-	//	}
-
-	//	if (strsubstringpos(_Url.c_str(), "outlook") > -1 || strsubstringpos(_Url.c_str(), "office365") > -1)
-	//	{
-	//		normalizeOutlookDirList(imapData, dirList);
-	//	}
-
-	//	if (strsubstringpos(_Url.c_str(), "yahoo") > -1)
-	//	{
-	//		normalizeYahooDirList(imapData, dirList);
-	//	}
-
-	//	if (strsubstringpos(_Url.c_str(), "dovecot") > -1)
-	//	{
-	//		normalizeDoveCotDirList(imapData, dirList);
-	//	}
-
-	//	return true;
-	//}
-	//return false;
 }
 
 bool ImapClient::getDirectory(std::string dirname, unsigned long& emailCount, unsigned long &uidNext)
@@ -253,13 +253,13 @@ bool ImapClient::getDirectory(std::string dirname, unsigned long& emailCount, un
 			return false;
 		}
 
-		buffer.push_back(resp);
-
 		if (strcontains(resp.c_str(), "IN OK"))
 		{
 			result = true;
 			break;
-		}
+		}		
+		
+		buffer.push_back(resp);
 	}
 
 	for (auto str : buffer)
@@ -297,13 +297,13 @@ bool ImapClient::getMessageHeader(long msgno)
 			return false;
 		}
 
-		buffer.push_back(resp);
-
 		if (strcontains(resp.c_str(), "HD OK"))
 		{
 			result = true;
 			break;
-		}
+		}		
+		
+		buffer.push_back(resp);
 	}
 
 	return result;
@@ -328,13 +328,13 @@ bool ImapClient::getMessageBody(long msgno)
 			return false;
 		}
 
-		buffer += resp;
-
 		if (strcontains(resp.c_str(), "BD OK"))
 		{
 			result = true;
 			break;
-		}
+		}		
+		
+		buffer += resp;
 	}
 
 	return result;

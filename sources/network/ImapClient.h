@@ -17,6 +17,7 @@ public:
     ~ImapClient();
 
     void setAccountInformation(const std::string &host, uint16_t port, std::string username, std::string password, char sectype);
+	bool disconnect();
 	bool connect();
     bool getDirectoryList(std::vector<std::string> &dirList);
 	bool getCapabilities();

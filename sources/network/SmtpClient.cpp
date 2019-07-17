@@ -76,12 +76,21 @@ bool SmtpClient::connect()
     return false;
 }
 
+bool SmtpClient::disconnect()
+{
+	if (_BearerPtr->cl.isConnected())
+	{
+		return _BearerPtr->cl.closeSocket();
+	}
+
+	return false;
+}
+
 bool SmtpClient::sendHelo()
 {
     std::string resp;
-    std::string my_ip = "123.201.90.94";
     char buff[128] = { 0 };
-    sprintf(buff, "EHLO %s\r\n", my_ip.c_str());
+    sprintf(buff, "EHLO %s\r\n", _PublicIp.c_str());
 
     std::string helo = buff;
     _BearerPtr->cl.sendString(helo);
@@ -105,6 +114,11 @@ bool SmtpClient::sendHelo()
     }
 
     return false;
+}
+
+void SmtpClient::setPublicIp(std::string& ip)
+{
+	_PublicIp = ip;
 }
 
 std::string SmtpClient::account()
