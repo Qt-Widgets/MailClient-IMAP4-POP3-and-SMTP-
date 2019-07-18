@@ -320,3 +320,31 @@ bool SmtpClient::login()
 
 	return false;
 }
+
+bool SmtpClient::logout()
+{
+	std::string resp;
+	std::vector<std::string> tokens;
+
+	char buff[128] = { 0 };
+
+	sprintf(buff, "QUIT\r\n");
+	int len = (int)strlen(buff);
+
+	_BearerPtr->cl.sendString(buff);
+
+	while (true)
+	{
+		if (!_BearerPtr->cl.receiveString(resp))
+		{
+			return false;
+		}
+
+		if (strcontains(resp.c_str(), "221"))
+		{
+			break;
+		}
+	}
+
+	return true;
+}

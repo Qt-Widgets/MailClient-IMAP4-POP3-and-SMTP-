@@ -22,9 +22,11 @@ public:
     bool getDirectoryList(std::vector<std::string> &dirList);
 	bool getCapabilities();
 	bool login();
+	bool logout();
 	bool getDirectory(std::string dirname, unsigned long &emailCount, unsigned long& uidNext);
-	bool getMessageHeader(long msgno);
-	bool getMessageBody(long msgno);
+	bool getDirectory(std::string dirname, std::string &fromdate, std::string &uidlist);
+	bool getMessageHeader(long uid);
+	bool getMessageBody(long uid);
 	bool deleteMessage(long msgno);
 	bool flagMessage(long msgno, std::string flag);
 	bool expunge(long msgno);

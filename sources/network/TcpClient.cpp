@@ -474,7 +474,7 @@ bool TcpClient::closeSocket()
 
 bool TcpClient::receiveString(std::string &ioStr, const char *delimeter)
 {
-	char	buffer[1024];
+	char	buffer[1025] = { 0 };
 	long	returnvalue;
 	std::string	data;
 	std::string  currentLine, nextLine;
@@ -514,7 +514,7 @@ bool TcpClient::receiveString(std::string &ioStr, const char *delimeter)
 
 	while (true)
 	{
-		memset(&buffer[0], 0, 1024);
+		memset(&buffer[0], 0, 1025);
 
 		if (_SocketReference->_RequireSSL)
 		{
@@ -561,11 +561,11 @@ bool TcpClient::receiveString(std::string &ioStr, const char *delimeter)
 
 bool TcpClient::receiveString(std::string& ioStr)
 {
-	char	buffer[1024];
+	char	buffer[1025];
 	long	returnvalue;
 	std::string	data;
 
-	memset(&buffer[0], 0, 1024);
+	memset(&buffer[0], 0, 1025);
 
 	if (_SocketReference->_RequireSSL)
 	{

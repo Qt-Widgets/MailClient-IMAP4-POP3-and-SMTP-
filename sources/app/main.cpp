@@ -13,6 +13,7 @@ int main(int argc, char *argv[])
 
     //app->Start();
 	app->TestIn();
+	//app->TestOut();
 
     return 0;
 }

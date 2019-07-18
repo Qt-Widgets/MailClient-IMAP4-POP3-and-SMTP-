@@ -23,7 +23,8 @@ public:
 	bool startTls();
 	bool needTls();
 	bool login();
-    bool sendMail(MailHeader &ehdr, MailBody &ebdy);
+	bool logout();
+	bool sendMail(MailHeader &ehdr, MailBody &ebdy);
     std::string account();
 	std::string error();
 

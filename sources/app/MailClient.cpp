@@ -67,9 +67,8 @@ void MailClient::TestIn()
 {
 	ImapClient climap;
 
-	//climap.setAccountInformation("rushpriority.com", 993, "subrato1@rushpriority.com", "roy1", 'S');
-	climap.setAccountInformation("outlook.office365.com", 993, "subrato.roy@collabera.com", "Spades@2019", 'S');
-	//climap.setAccountInformation("imap.gmail.com", 993, "sriiixi@gmail.com", "Brasstacks@1974", 'S');
+	//climap.setAccountInformation("outlook.office365.com", 993, "subrato.roy@collabera.com", "Spades@2019", 'S');
+	climap.setAccountInformation("rushpriority.com", 993, "subrato1@rushpriority.com", "roy1", 'S');
 
 	if (climap.connect())
 	{
@@ -81,22 +80,30 @@ void MailClient::TestIn()
 
 				if (climap.getDirectoryList(dlist))
 				{
-					for (auto s : dlist)
-					{
-						cout << s << endl;
-					}
-
 					unsigned long count, uidnext;
 
 					if (climap.getDirectory("INBOX", count, uidnext))
 					{
-						if (climap.getMessageHeader(count - 1))
+						std::string uidstr;
+						std::string fromdate = "17-JUL-2019";
+
+						climap.getDirectory("INBOX", fromdate, uidstr);
+
+						std::vector<std::string> uidlist;
+
+						strsplit(uidstr, uidlist, ' ', true);
+
+						for (std::string str : uidlist)
 						{
-							climap.getMessageBody(count - 1);
+							if (climap.getMessageHeader(atoi(str.c_str())))
+							{
+								climap.getMessageBody(atoi(str.c_str()));
+							}
 						}
 					}
 				}
 			}
+			climap.logout();
 		}
 	}
 
@@ -138,19 +145,19 @@ void MailClient::TestOut()
 	std::string serialized_header;
 	std::string serialized_body;
 
-	hdr.setFrom("subrato1@rushpriority.com");
-	hdr.setAccount("subrato1@rushpriority.com");
+	hdr.setFrom("subrato.roy@collabera.com");
+	hdr.setAccount("subrato.roy@collabera.com");
 	hdr.addtoToList("sriiixi@gmail.com");
-	hdr.addtoCcList("subrato.roy@collabera.com");
-	hdr.setSubject("Another Test Message");
+	hdr.addtoCcList("subratoroy@hotmail.com");
+	hdr.setSubject("Test Message from RP2");
 	hdr.serialize(serialized_header, nullptr);
 
-	bdy.setMessage("Text body as test message .....");
+	bdy.setMessage("Text body as test message from Rush Priority 2 testing code.....");
 	bdy.setMessageId(hdr.messageId());
 	bdy.serialize(serialized_body);
 
 	SmtpClient clsmtp;
-	clsmtp.setAccountInformation("rushpriority.com", 587, "subrato1@rushpriority.com", "roy1", 'N');
+	clsmtp.setAccountInformation("smtp.office365.com", 587, "subrato.roy@collabera.com", "Spades@2019", 'N');
 	clsmtp.setPublicIp(publicIpAddress);
 
 	if (clsmtp.connect())
@@ -166,6 +173,7 @@ void MailClient::TestOut()
 						if (clsmtp.login())
 						{
 							clsmtp.sendMail(hdr, bdy);
+							clsmtp.logout();
 						}
 					}
 				}
@@ -175,6 +183,7 @@ void MailClient::TestOut()
 				if (clsmtp.login())
 				{
 					clsmtp.sendMail(hdr, bdy);
+					clsmtp.logout();
 				}
 			}
 		}
