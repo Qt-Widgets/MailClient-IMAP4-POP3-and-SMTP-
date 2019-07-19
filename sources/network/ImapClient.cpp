@@ -1,5 +1,5 @@
 #include <memory.h>
-#include "../utils/StringEx.h"
+#include "../../utils/StringEx.h"
 #include "ImapClient.h"
 #include "TcpClient.h"
 
@@ -301,13 +301,47 @@ bool ImapClient::getDirectory(std::string dirname, unsigned long& emailCount, un
 	return result;
 }
 
-bool ImapClient::getDirectory(std::string dirname, std::string& fromdate, std::string& uidlist)
+bool ImapClient::getEmailsSince(std::string dirname, std::string& fromdate, std::string& uidlist)
 {
 	std::string resp;
 	std::vector<std::string> buffer;
 	char command[128] = { 0 };
 	memset(command, 0, 128);
 	sprintf(command, "UID SEARCH SINCE \"%s\"\r\n", fromdate.c_str());
+	_BearerPtr->cl.sendString(command);
+
+	bool result = false;
+
+	while (true)
+	{
+		if (!_BearerPtr->cl.receiveString(resp, "\r\n"))
+		{
+			result = false;
+			break;
+		}
+
+		if (strcontains(resp.c_str(), "UID OK"))
+		{
+			result = true;
+			break;
+		}
+
+		uidlist = resp;
+		strreplace(uidlist, "SEARCH", "*");
+		strremove(uidlist, '*');
+		stralltrim(uidlist);
+	}
+
+	return result;
+}
+
+bool ImapClient::getEmailsPrior(std::string dirname, std::string& fromdate, std::string& uidlist)
+{
+	std::string resp;
+	std::vector<std::string> buffer;
+	char command[128] = { 0 };
+	memset(command, 0, 128);
+	sprintf(command, "UID SEARCH BEFORE \"%s\"\r\n", fromdate.c_str());
 	_BearerPtr->cl.sendString(command);
 
 	bool result = false;
@@ -442,4 +476,3 @@ unsigned long getNumber(const std::string& str)
 	num = atol(str_count.c_str());
 	return num;
 }
-

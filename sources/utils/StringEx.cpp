@@ -238,14 +238,17 @@ void strreplace(string &srcstr, const string oldpattern, const char newchar)
 
 void stralltrim(std::string &str)
 {
-    char buffer[4096];
-    memset((char*)&buffer,0,4096);
-    strcpy(buffer,str.c_str());
+    char* buffer = new char[str.length() +1];
+    memset(buffer, 0, str.length());
+    strcpy(buffer, str.c_str());
 
     int len = strlen(buffer);
 
-    if(len<1)
-        return;
+	if (len < 1)
+	{
+		delete[] buffer;
+		return;
+	}
 
     for(int i = len-1;  ; i--)
     {
@@ -266,6 +269,7 @@ void stralltrim(std::string &str)
     if(len<1)
     {
         str = buffer;
+		delete[] buffer;
         return;
     }
 
@@ -274,6 +278,7 @@ void stralltrim(std::string &str)
     for ( NULL; *buf && isspace(*buf); buf++);
 
     str = buf;
+	delete[] buffer;
 }
 
 

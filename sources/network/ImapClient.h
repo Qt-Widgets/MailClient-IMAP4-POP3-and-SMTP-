@@ -1,8 +1,8 @@
 #ifndef _IMAP_CLIENT
 #define _IMAP_CLIENT
 
-#include "SecurityType.h"
-#include "Mail.h"
+#include "../data/Mail.h"
+#include "../data/SecurityType.h"
 #include <string>
 
 using namespace std;
@@ -24,7 +24,8 @@ public:
 	bool login();
 	bool logout();
 	bool getDirectory(std::string dirname, unsigned long &emailCount, unsigned long& uidNext);
-	bool getDirectory(std::string dirname, std::string &fromdate, std::string &uidlist);
+	bool getEmailsSince(std::string dirname, std::string &fromdate, std::string &uidlist);
+	bool getEmailsPrior(std::string dirname, std::string& fromdate, std::string& uidlist);
 	bool getMessageHeader(long uid);
 	bool getMessageBody(long uid);
 	bool deleteMessage(long msgno);
