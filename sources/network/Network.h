@@ -26,7 +26,7 @@ typedef enum PacketBehaviour
 class Descriptor
 {
 public:
-	virtual DescriptorType descriptorType() = 0;
+	virtual DescriptorType DescriptorType() = 0;
 };
 
 
@@ -35,15 +35,15 @@ class Network
 public:
 	Network();
 	virtual ~Network();
-	static bool isIPAddress(char* str);
-	static bool isIP6Address(char* str);
-	static bool isIP4Address(char* str);
-	static void getLocalHostName(char *hostname);
-	static void getLocalIPAddress(const int newServerfd, char *ipaddress);
-	static void getEndPoint(const char* url, char* host, int &port);
-	static bool addToDescriptors(void* sockref);
-	static bool removeFromDescriptors(void* sockref);
-	static Descriptor* getActiveDescriptor();
+	static bool IsIPAddress(char* str);
+	static bool IsIP6Address(char* str);
+	static bool IsIP4Address(char* str);
+	static void GetLocalHostName(char *hostname);
+	static void GetLocalIPAddress(const int newServerfd, char *ipaddress);
+	static void GetEndPoint(const char* url, char* host, int &port);
+	static bool AddToDescriptors(void* sockref);
+	static bool RemoveFromDescriptors(void* sockref);
+	static Descriptor* GetActiveDescriptor();
 private:
 };
 

@@ -120,18 +120,18 @@ Network::~Network()
 	#endif
 }
 
-bool Network::isIPAddress(char* str)
+bool Network::IsIPAddress(char* str)
 {
 	//return (IsIP4Address(str) || IsIP6Address(str));
-	return isIP4Address(str);
+	return IsIP4Address(str);
 }
 
-bool Network::isIP6Address(char*)
+bool Network::IsIP6Address(char*)
 {
 	return false;
 }
 
-bool Network::isIP4Address(char* str)
+bool Network::IsIP4Address(char* str)
 {
 	int slen = strlen(str);
 
@@ -195,7 +195,7 @@ bool Network::isIP4Address(char* str)
 	return true;
 }
 
-void Network::getLocalHostName(char *hostname)
+void Network::GetLocalHostName(char *hostname)
 {
 	char name[128] = { 0 };
 	int namelen = 128;
@@ -205,7 +205,7 @@ void Network::getLocalHostName(char *hostname)
 	}
 }
 
-void Network::getLocalIPAddress(const int newServerfd, char *ipaddress)
+void Network::GetLocalIPAddress(const int newServerfd, char *ipaddress)
 {
 	struct sockaddr_in localAddress;
 	socklen_t addressLength = sizeof(localAddress);
@@ -213,7 +213,7 @@ void Network::getLocalIPAddress(const int newServerfd, char *ipaddress)
 	strcpy(ipaddress, ::inet_ntoa(localAddress.sin_addr));
 }
 
-void Network::getEndPoint(const char* url, char* host, int &port)
+void Network::GetEndPoint(const char* url, char* host, int &port)
 {
 	/*
 	if (dest_url[strlen(dest_url)] == '/')
@@ -240,7 +240,7 @@ void Network::getEndPoint(const char* url, char* host, int &port)
 	*/
 }
 
-bool Network::addToDescriptors(void* sockref)
+bool Network::AddToDescriptors(void* sockref)
 {
 	int    on = 1;
 	int    rc = -1;
@@ -262,7 +262,7 @@ bool Network::addToDescriptors(void* sockref)
 	return true;
 }
 
-bool Network::removeFromDescriptors(void* sockref)
+bool Network::RemoveFromDescriptors(void* sockref)
 {
 	int    on = 1;
 	int    rc = -1;
@@ -285,7 +285,7 @@ bool Network::removeFromDescriptors(void* sockref)
 	return true;
 }
 
-Descriptor* Network::getActiveDescriptor()
+Descriptor* Network::GetActiveDescriptor()
 {
 	FD_ZERO(&working_set);
 	int    rc = -1;

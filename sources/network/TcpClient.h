@@ -17,30 +17,30 @@ public:
 	TcpClient& operator=(const TcpClient& other);
 
 	virtual ~TcpClient();
-	bool createSocket(const char* servername, int serverport, bool requireSSL = false);
-	bool createSocket(unsigned long inSocket, bool requireSSL = false);
-	bool connectSocket(int &returncode);
-	bool closeSocket();
-	bool isConnected();
-	void setPacketDelimeter(char* str);
-	void setPacketLength(long len);
+	bool CreateSocket(const char* servername, int serverport, bool requireSSL = false);
+	bool CreateSocket(unsigned long inSocket, bool requireSSL = false);
+	bool ConnectSocket(int &returncode);
+	bool CloseSocket();
+	bool IsConnected();
+	void SetPacketDelimeter(char* str);
+	void SetPacketLength(long len);
 
-	bool switchToSecureMode();
+	bool SwitchToSecureMode();
 
-	std::string* certificateName();
+	std::string* CertificateName();
 
-	bool sendBuffer(const char* data, int &len);
-	bool sendString(const std::string &str);
+	bool SendBuffer(const char* data, int &len);
+	bool SendString(const std::string &str);
 
-	bool receiveBuffer(int len);
-	bool receiveString(std::string &ioStr, const char* delimeter);
-	bool receiveString(std::string& ioStr);
+	bool ReceiveBuffer(int len);
+	bool ReceiveString(std::string &ioStr, const char* delimeter);
+	bool ReceiveString(std::string& ioStr);
 
-	unsigned long getSocket();
+	unsigned long GetSocket();
 
-	int pendingPreFetchedBufferSize();
+	int PendingPreFetchedBufferSize();
 private:
-	SocketReference*    _SocketReference;
+	SocketReference*    socketReferencePtr;
 };
 
 #endif

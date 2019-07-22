@@ -1,8 +1,8 @@
 #ifndef _SMTP_CLIENT
 #define _SMTP_CLIENT
 
-#include "SecurityType.h"
 #include "Mail.h"
+#include "SecurityType.h"
 #include <string>
 
 using namespace std;
@@ -13,35 +13,34 @@ class SmtpClient
 {
 public:
     SmtpClient();
-    SmtpClient(const std::string host, uint16_t port, std::string username, std::string password, char sectype, bool sendhelo = false);
+    SmtpClient(const std::string hoststr, uint16_t portstr, std::string usernamestr, std::string passwordstr, SecurityType sectype);
     ~SmtpClient();
-    void setAccountInformation(const std::string host, uint16_t port, std::string username, std::string password, char sectype, bool sendhelo = false);
-	void setPublicIp(std::string& ip);
-	bool disconnect();
-	bool connect();
-    bool sendHelo();
-	bool startTls();
-	bool needTls();
-	bool login();
-	bool logout();
-	bool sendMail(MailHeader &ehdr, MailBody &ebdy);
-    std::string account();
-	std::string error();
+    void SetAccountInformation(const std::string hoststr, uint16_t portstr, std::string usernamestr, std::string passwordstr, SecurityType sectype);
+	void SetPublicIp(std::string& ip);
+	bool Disconnect();
+	bool Connect();
+    bool SendHelo();
+	bool StartTls();
+	bool NeedTls();
+	bool Login();
+	bool Logout();
+	bool SendMail(MailHeader &ehdr, MailBody &ebdy);
+    std::string Account();
+	std::string Error();
 
 private:
-    std::string _Host;
-    std::string _Username;
-    std::string _Password;
-	uint16_t _Port;
-    bool _SendHelo;
-    char _SecurityType;
-	bool _StartTls;
-	std::string _PublicIp;
+    std::string host;
+    std::string username;
+    std::string password;
+	uint16_t port;
+	SecurityType securityType;
+	bool startTls;
+	std::string publicIp;
 	
-	std::string _Error;
-    MailHeader _EmlHdr;
-    MailBody _EmlBdy;
-	SmtpBearer* _BearerPtr;
+	std::string error;
+    MailHeader emailHdr;
+    MailBody emailBdy;
+	SmtpBearer* bearerPtr;
 };
 
 #endif

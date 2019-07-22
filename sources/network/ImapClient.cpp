@@ -1,5 +1,5 @@
 #include <memory.h>
-#include "../../utils/StringEx.h"
+#include "../utils/StringEx.h"
 #include "ImapClient.h"
 #include "TcpClient.h"
 
@@ -16,68 +16,80 @@ unsigned long getNumber(const std::string& str);
 
 ImapClient::ImapClient()
 {
-	_Host = "";
-	_Username = "";
-	_Password = "";
-	_Port = 0;
-	_SecurityType = 'N';
+	host = "";
+	username = "";
+	password = "";
+	port = 0;
+	securityType = None;
 
-	_CurrentDirectory = "";
+	currentDirectory = "";
 	_Error = "";
 
-	_BearerPtr = new ImapBearer();
+	bearerPtr = new ImapBearer();
 }
 
-ImapClient::ImapClient(const std::string &host, uint16_t port, std::string username, std::string password, char sectype)
+ImapClient::ImapClient(const std::string &hoststr, uint16_t portstr, std::string usernamestr, std::string passwordstr, SecurityType sectype)
 {
-    if(sectype == 'A')
-    {
-        sectype = 'S';
-    }
+	if (sectype == Tls)
+	{
+		sectype = Ssl;
+	}
 
-    _Host = host;
-    _Port = port;
-    _Username = username;
-    _Password = password;
-    _SecurityType = sectype;
+    host = hoststr;
+    port = portstr;
+    username = usernamestr;
+    password = passwordstr;
+    securityType = sectype;
 
-	_CurrentDirectory = "";
+	currentDirectory = "";
 	_Error = "";
 
-	_BearerPtr = new ImapBearer();
+	bearerPtr = new ImapBearer();
 }
 
 ImapClient::~ImapClient()
 {
-	if (_BearerPtr)
+	if (bearerPtr)
 	{
-		_BearerPtr->cl.closeSocket();
+		bearerPtr->cl.CloseSocket();
 	}
 }
 
-void ImapClient::setAccountInformation(const std::string &host, uint16_t port, std::string username, std::string password, char sectype)
+void ImapClient::SetAccountInformation(const std::string &hoststr, uint16_t portstr, std::string usernamestr, std::string passwordstr, SecurityType sectype)
 {
-    if(sectype == 'A')
-    {
-        sectype = 'S';
-    }
+	if (sectype == Tls)
+	{
+		sectype = Ssl;
+	}
 
-    _Host = host;
-    _Port = port;
-    _Username = username;
-    _Password = password;
-    _SecurityType = sectype;
-	_CurrentDirectory = "";
+    host = hoststr;
+    port = portstr;
+    username = usernamestr;
+    password = passwordstr;
+    securityType = sectype;
+	currentDirectory = "";
 
     return;
 }
 
-bool ImapClient::connect()
+bool ImapClient::Connect()
 {
-	if (_BearerPtr->cl.createSocket(_Host.c_str(), _Port, true))
+	bool need_ssl = false;
+
+	if (securityType == None)
 	{
-		int retcode;
-		if (_BearerPtr->cl.connectSocket(retcode))
+		need_ssl = false;
+	}
+	else
+	{
+		need_ssl = true;
+	}		
+	
+	int retcode;
+
+	if (bearerPtr->cl.CreateSocket(host.c_str(), port, need_ssl))
+	{
+		if (bearerPtr->cl.ConnectSocket(retcode))
 		{
 			return true;
 		}
@@ -86,25 +98,25 @@ bool ImapClient::connect()
 	return false;
 }
 
-bool ImapClient::disconnect()
+bool ImapClient::Disconnect()
 {
-	if (_BearerPtr->cl.isConnected())
+	if (bearerPtr->cl.IsConnected())
 	{
-		return _BearerPtr->cl.closeSocket();
+		return bearerPtr->cl.CloseSocket();
 	}
 
 	return false;
 }
 
-bool ImapClient::getCapabilities()
+bool ImapClient::GetCapabilities()
 {
 	std::string resp;
 	std::string capability = "CY CAPABILITY\r\n";
-	_BearerPtr->cl.sendString(capability);
+	bearerPtr->cl.SendString(capability);
 
 	while (true)
 	{
-		if (!_BearerPtr->cl.receiveString(resp, "\r\n"))
+		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
 		{
 			return false;
 		}
@@ -118,19 +130,19 @@ bool ImapClient::getCapabilities()
 	return false;
 }
 
-bool ImapClient::login()
+bool ImapClient::Login()
 {
 	std::string resp;
 
 	std::string login = "LG LOGIN ";
-	login += _Username + " ";
-	login += _Password + "\r\n";
+	login += username + " ";
+	login += password + "\r\n";
 
-	_BearerPtr->cl.sendString(login);
+	bearerPtr->cl.SendString(login);
 
 	while (true)
 	{
-		if (!_BearerPtr->cl.receiveString(resp, "\r\n"))
+		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
 		{
 			return false;
 		}
@@ -144,17 +156,17 @@ bool ImapClient::login()
 	return false;
 }
 
-bool ImapClient::logout()
+bool ImapClient::Logout()
 {
 	std::string resp;
 
 	std::string login = "LG LOGOUT\r\n ";
 
-	_BearerPtr->cl.sendString(login);
+	bearerPtr->cl.SendString(login);
 
 	while (true)
 	{
-		if (!_BearerPtr->cl.receiveString(resp, "\r\n"))
+		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
 		{
 			return false;
 		}
@@ -168,41 +180,41 @@ bool ImapClient::logout()
 	return false;
 }
 
-std::string ImapClient::error()
+std::string ImapClient::Error()
 {
     return _Error;
 }
 
-std::string ImapClient::account()
+std::string ImapClient::Account()
 {
-    return _Username;
+    return username;
 }
 
-bool ImapClient::expunge(long msgno)
-{
-	std::string imapData;
-	return false;
-}
-
-bool ImapClient::markAsSeen(long msgno)
+bool ImapClient::Expunge(long msgno)
 {
 	std::string imapData;
 	return false;
 }
 
-bool ImapClient::deleteMessage(long msgno)
+bool ImapClient::MarkAsSeen(long msgno)
 {
 	std::string imapData;
 	return false;
 }
 
-bool ImapClient::flagMessage(long msgno, std::string flag)
+bool ImapClient::DeleteMessage(long msgno)
 {
 	std::string imapData;
 	return false;
 }
 
-bool ImapClient::getDirectoryList(std::vector<std::string>& dirList)
+bool ImapClient::FlagMessage(long msgno, std::string flag)
+{
+	std::string imapData;
+	return false;
+}
+
+bool ImapClient::GetDirectoryList(std::vector<std::string>& dirList)
 {
 	std::string resp;
 
@@ -210,13 +222,13 @@ bool ImapClient::getDirectoryList(std::vector<std::string>& dirList)
 	char command[128] = { 0 };
 	sprintf(command, "%s", temp.c_str());
 
-	_BearerPtr->cl.sendString(command);
+	bearerPtr->cl.SendString(command);
 
 	bool result = false;
 
 	while (true)
 	{
-		if (!_BearerPtr->cl.receiveString(resp, "\r\n"))
+		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
 		{
 			return false;
 		}
@@ -252,22 +264,22 @@ bool ImapClient::getDirectoryList(std::vector<std::string>& dirList)
 	return result;
 }
 
-bool ImapClient::getDirectory(std::string dirname, unsigned long& emailCount, unsigned long &uidNext)
+bool ImapClient::GetDirectory(std::string dirname, unsigned long& emailCount, unsigned long &uidNext)
 {
-	_CurrentDirectory = dirname;
+	currentDirectory = dirname;
 	
 	std::string resp;
 	std::vector<std::string> buffer;
 	char command[128] = { 0 };
-	sprintf(command, "IN SELECT \"%s\"\r\n", _CurrentDirectory.c_str());
+	sprintf(command, "IN SELECT \"%s\"\r\n", currentDirectory.c_str());
 
-	_BearerPtr->cl.sendString(command);
+	bearerPtr->cl.SendString(command);
 
 	bool result = false;
 
 	while (true)
 	{
-		if (!_BearerPtr->cl.receiveString(resp, "\r\n"))
+		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
 		{
 			result = false;
 			break;
@@ -308,13 +320,13 @@ bool ImapClient::getEmailsSince(std::string dirname, std::string& fromdate, std:
 	char command[128] = { 0 };
 	memset(command, 0, 128);
 	sprintf(command, "UID SEARCH SINCE \"%s\"\r\n", fromdate.c_str());
-	_BearerPtr->cl.sendString(command);
+	bearerPtr->cl.SendString(command);
 
 	bool result = false;
 
 	while (true)
 	{
-		if (!_BearerPtr->cl.receiveString(resp, "\r\n"))
+		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
 		{
 			result = false;
 			break;
@@ -335,20 +347,20 @@ bool ImapClient::getEmailsSince(std::string dirname, std::string& fromdate, std:
 	return result;
 }
 
-bool ImapClient::getEmailsPrior(std::string dirname, std::string& fromdate, std::string& uidlist)
+bool ImapClient::GetEmailsPrior(std::string dirname, std::string& fromdate, std::string& uidlist)
 {
 	std::string resp;
 	std::vector<std::string> buffer;
 	char command[128] = { 0 };
 	memset(command, 0, 128);
 	sprintf(command, "UID SEARCH BEFORE \"%s\"\r\n", fromdate.c_str());
-	_BearerPtr->cl.sendString(command);
+	bearerPtr->cl.SendString(command);
 
 	bool result = false;
 
 	while (true)
 	{
-		if (!_BearerPtr->cl.receiveString(resp, "\r\n"))
+		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
 		{
 			result = false;
 			break;
@@ -370,7 +382,7 @@ bool ImapClient::getEmailsPrior(std::string dirname, std::string& fromdate, std:
 }
 
 
-bool ImapClient::getMessageHeader(long uid)
+bool ImapClient::GetMessageHeader(long uid)
 {
 	char command[128] = { 0 };
 	memset(command, 0, 128);
@@ -378,13 +390,13 @@ bool ImapClient::getMessageHeader(long uid)
 
 	std::string resp;
 	std::vector<std::string> buffer;
-	_BearerPtr->cl.sendString(command);
+	bearerPtr->cl.SendString(command);
 
 	bool result = false;
 
 	while (true)
 	{
-		if (!_BearerPtr->cl.receiveString(resp, "\r\n"))
+		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
 		{
 			return false;
 		}
@@ -411,7 +423,7 @@ bool ImapClient::getMessageHeader(long uid)
 	return result;
 }
 
-bool ImapClient::getMessageBody(long uid)
+bool ImapClient::GetMessageBody(long uid)
 {
 	char command[128] = { 0 };
 	memset(command, 0, 128);
@@ -419,7 +431,7 @@ bool ImapClient::getMessageBody(long uid)
 
 	std::string resp;
 	std::string buffer;
-	_BearerPtr->cl.sendString(command);
+	bearerPtr->cl.SendString(command);
 
 	bool result = false;
 
@@ -427,7 +439,7 @@ bool ImapClient::getMessageBody(long uid)
 
 	while (true)
 	{
-		if (!_BearerPtr->cl.receiveString(resp, "\r\n"))
+		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
 		{
 			return false;
 		}

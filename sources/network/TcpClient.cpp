@@ -77,262 +77,286 @@
 class SocketReference
 {
 public:
-	bool				_Connected;
-	unsigned long		_Socket;
-	sockaddr_in			_ServerAddress;
-	std::string 		_ServerName;
-	int					_ServerPort;
-	int					_PreFetchedBufferSize;
-	unsigned char*		_PreFetchedBuffer;
-	int					_PacketSize;
-	unsigned char*		_Packet;
-	char				_PacketDelimeter[32];
-	bool				_RequireSSL;
-	PacketBehaviour		_Phv;
+	bool				connected;
+	unsigned long		socketFd;
+	sockaddr_in			serverAddress;
+	std::string 		serverName;
+	int					serverPort;
+	size_t				preFetchedBufferSize;
+	unsigned char*		preFetchedBuffer;
+	int					packetSize;
+	unsigned char*		packet;
+	char				packetDelimeter[32];
+	bool				requireSSL;
+	PacketBehaviour		phv;
 
-	BIO*				_CertificateBIO;
-	X509*               _Certificate;
-	X509_name_st*		_CertificateName;
-	const SSL_METHOD*	_SSLMethod;
-	SSL_CTX*			_SSLContext;
-	SSL*				_SSLSession;
-	std::string 		_CertificateNamePrintable;
+	BIO*				certificateBIO;
+	X509*               certificate;
+	X509_name_st*		certificateName;
+	const SSL_METHOD*	SSLMethod;
+	SSL_CTX*			SSLContext;
+	SSL*				SSLSession;
+	std::string 		certificateNamePrintable;
+
+	SocketReference()
+	{
+		connected = false;
+		socketFd = -1;
+		memset(&serverAddress, 0, sizeof(sockaddr_in));
+		serverName = "";
+		serverPort = -1;
+		preFetchedBufferSize = 0;
+		preFetchedBuffer = nullptr;
+		packetSize = 0;
+		packet = nullptr;
+		memset(&packetDelimeter[0], 0, 32);
+		requireSSL = false;
+		phv = Delimited;
+
+		certificateBIO = nullptr;
+		certificate = nullptr;
+		certificateName = nullptr;
+		SSLMethod = nullptr;
+		SSLContext = nullptr;
+		SSLSession = nullptr;
+		certificateNamePrintable = "";
+	}
 };
 
 TcpClient::TcpClient()
 {
-	_SocketReference = new SocketReference();
-	_SocketReference->_Socket = 0;
-	_SocketReference->_Connected = false;
-	memset((void*)&_SocketReference->_ServerAddress, 0, sizeof(sockaddr_in));
-	_SocketReference->_PreFetchedBufferSize = 0;
-	_SocketReference->_PreFetchedBuffer = nullptr;
-	_SocketReference->_PacketSize = 0;
-	_SocketReference->_Packet = nullptr;
-	_SocketReference->_RequireSSL = false;
-	_SocketReference->_Phv = Undefined;
+	socketReferencePtr = new SocketReference();
+	socketReferencePtr->socketFd = 0;
+	socketReferencePtr->connected = false;
+	memset((void*)&socketReferencePtr->serverAddress, 0, sizeof(sockaddr_in));
+	socketReferencePtr->preFetchedBufferSize = 0;
+	socketReferencePtr->preFetchedBuffer = nullptr;
+	socketReferencePtr->packetSize = 0;
+	socketReferencePtr->packet = nullptr;
+	socketReferencePtr->requireSSL = false;
+	socketReferencePtr->phv = Undefined;
 
-	_SocketReference->_CertificateBIO = nullptr;
-	_SocketReference->_Certificate = nullptr;
-	_SocketReference->_CertificateName = nullptr;
-	_SocketReference->_SSLMethod = nullptr;
-	_SocketReference->_SSLContext = nullptr;
-	_SocketReference->_SSLSession = nullptr;
+	socketReferencePtr->certificateBIO = nullptr;
+	socketReferencePtr->certificate = nullptr;
+	socketReferencePtr->certificateName = nullptr;
+	socketReferencePtr->SSLMethod = nullptr;
+	socketReferencePtr->SSLContext = nullptr;
+	socketReferencePtr->SSLSession = nullptr;
 }
 
 TcpClient::TcpClient(int inSocket, bool requireSSL)
 {
-	_SocketReference = new SocketReference();
-	_SocketReference->_Socket = inSocket;
-	_SocketReference->_Connected = true;
-	memset((void*)&_SocketReference->_ServerAddress, 0, sizeof(sockaddr_in));
-	_SocketReference->_PreFetchedBufferSize = 0;
-	_SocketReference->_PreFetchedBuffer = nullptr;
-	_SocketReference->_PacketSize = 0;
-	_SocketReference->_Packet = nullptr;
-	_SocketReference->_RequireSSL = requireSSL;
-	_SocketReference->_Phv = Undefined;
+	socketReferencePtr = new SocketReference();
+	socketReferencePtr->socketFd = inSocket;
+	socketReferencePtr->connected = true;
+	memset((void*)&socketReferencePtr->serverAddress, 0, sizeof(sockaddr_in));
+	socketReferencePtr->preFetchedBufferSize = 0;
+	socketReferencePtr->preFetchedBuffer = nullptr;
+	socketReferencePtr->packetSize = 0;
+	socketReferencePtr->packet = nullptr;
+	socketReferencePtr->requireSSL = requireSSL;
+	socketReferencePtr->phv = Undefined;
 
-	_SocketReference->_CertificateBIO = nullptr;
-	_SocketReference->_Certificate = nullptr;
-	_SocketReference->_CertificateName = nullptr;
-	_SocketReference->_SSLMethod = nullptr;
-	_SocketReference->_SSLContext = nullptr;
-	_SocketReference->_SSLSession = nullptr;
+	socketReferencePtr->certificateBIO = nullptr;
+	socketReferencePtr->certificate = nullptr;
+	socketReferencePtr->certificateName = nullptr;
+	socketReferencePtr->SSLMethod = nullptr;
+	socketReferencePtr->SSLContext = nullptr;
+	socketReferencePtr->SSLSession = nullptr;
 }
 
 TcpClient::TcpClient(const TcpClient& other)
 {
-	_SocketReference = new SocketReference();
-	memset((void*)&_SocketReference->_ServerAddress, 0, sizeof(sockaddr_in));
+	socketReferencePtr = new SocketReference();
+	memset((void*)&socketReferencePtr->serverAddress, 0, sizeof(sockaddr_in));
 
-	_SocketReference->_PreFetchedBufferSize = 0;
+	socketReferencePtr->preFetchedBufferSize = 0;
 
-	if (_SocketReference->_PreFetchedBuffer != nullptr)
+	if (socketReferencePtr->preFetchedBuffer != nullptr)
 	{
-		delete _SocketReference->_PreFetchedBuffer;
-		_SocketReference->_PreFetchedBuffer = nullptr;
+		delete socketReferencePtr->preFetchedBuffer;
+		socketReferencePtr->preFetchedBuffer = nullptr;
 	}
 
-	_SocketReference->_PacketSize = 0;
+	socketReferencePtr->packetSize = 0;
 
-	if (_SocketReference->_Packet != nullptr)
+	if (socketReferencePtr->packet != nullptr)
 	{
-		delete _SocketReference->_Packet;
-		_SocketReference->_Packet = nullptr;
+		delete socketReferencePtr->packet;
+		socketReferencePtr->packet = nullptr;
 	}
 
-	_SocketReference->_Socket = other._SocketReference->_Socket;
-	_SocketReference->_Connected = other._SocketReference->_Connected;
-	memcpy((void*)&_SocketReference->_ServerAddress, (void*)&other._SocketReference->_ServerAddress, sizeof(sockaddr_in));
+	socketReferencePtr->socketFd = other.socketReferencePtr->socketFd;
+	socketReferencePtr->connected = other.socketReferencePtr->connected;
+	memcpy((void*)&socketReferencePtr->serverAddress, (void*)&other.socketReferencePtr->serverAddress, sizeof(sockaddr_in));
 
-	if (other._SocketReference->_PreFetchedBufferSize > 0)
+	if (other.socketReferencePtr->preFetchedBufferSize > 0)
 	{
-		_SocketReference->_PreFetchedBuffer = new unsigned char[other._SocketReference->_PreFetchedBufferSize];
-		_SocketReference->_PreFetchedBufferSize = other._SocketReference->_PreFetchedBufferSize;
-		memcpy((unsigned char*)&_SocketReference->_PreFetchedBuffer, (unsigned char*)&other._SocketReference->_PreFetchedBuffer, _SocketReference->_PreFetchedBufferSize);
+		socketReferencePtr->preFetchedBuffer = new unsigned char[other.socketReferencePtr->preFetchedBufferSize];
+		socketReferencePtr->preFetchedBufferSize = other.socketReferencePtr->preFetchedBufferSize;
+		memcpy((unsigned char*)&socketReferencePtr->preFetchedBuffer, (unsigned char*)&other.socketReferencePtr->preFetchedBuffer, socketReferencePtr->preFetchedBufferSize);
 	}
 
-	if (other._SocketReference->_PacketSize > 0)
+	if (other.socketReferencePtr->packetSize > 0)
 	{
-		_SocketReference->_Packet = new unsigned char[other._SocketReference->_PacketSize];
-		_SocketReference->_PacketSize = other._SocketReference->_PacketSize;
-		memcpy((unsigned char*)&_SocketReference->_Packet, (unsigned char*)&other._SocketReference->_Packet, _SocketReference->_PacketSize);
+		socketReferencePtr->packet = new unsigned char[other.socketReferencePtr->packetSize];
+		socketReferencePtr->packetSize = other.socketReferencePtr->packetSize;
+		memcpy((unsigned char*)&socketReferencePtr->packet, (unsigned char*)&other.socketReferencePtr->packet, socketReferencePtr->packetSize);
 	}
 
-	_SocketReference->_Phv = other._SocketReference->_Phv;
+	socketReferencePtr->phv = other.socketReferencePtr->phv;
 
-	_SocketReference->_RequireSSL = other._SocketReference->_RequireSSL;
+	socketReferencePtr->requireSSL = other.socketReferencePtr->requireSSL;
 
-	_SocketReference->_CertificateBIO = other._SocketReference->_CertificateBIO;
-	_SocketReference->_Certificate = other._SocketReference->_Certificate;
-	_SocketReference->_CertificateName = other._SocketReference->_CertificateName;
-	_SocketReference->_SSLMethod = other._SocketReference->_SSLMethod;
-	_SocketReference->_SSLContext = other._SocketReference->_SSLContext;
-	_SocketReference->_SSLSession = other._SocketReference->_SSLSession;
+	socketReferencePtr->certificateBIO = other.socketReferencePtr->certificateBIO;
+	socketReferencePtr->certificate = other.socketReferencePtr->certificate;
+	socketReferencePtr->certificateName = other.socketReferencePtr->certificateName;
+	socketReferencePtr->SSLMethod = other.socketReferencePtr->SSLMethod;
+	socketReferencePtr->SSLContext = other.socketReferencePtr->SSLContext;
+	socketReferencePtr->SSLSession = other.socketReferencePtr->SSLSession;
 }
 
 TcpClient& TcpClient::operator=(const TcpClient& other)
 {
-	memset((void*)&_SocketReference->_ServerAddress, 0, sizeof(sockaddr_in));
+	memset((void*)&socketReferencePtr->serverAddress, 0, sizeof(sockaddr_in));
 
-	_SocketReference->_PreFetchedBufferSize = 0;
+	socketReferencePtr->preFetchedBufferSize = 0;
 
-	if (_SocketReference->_PreFetchedBuffer != nullptr)
+	if (socketReferencePtr->preFetchedBuffer != nullptr)
 	{
-		delete _SocketReference->_PreFetchedBuffer;
-		_SocketReference->_PreFetchedBuffer = nullptr;
+		delete socketReferencePtr->preFetchedBuffer;
+		socketReferencePtr->preFetchedBuffer = nullptr;
 	}
 
-	_SocketReference->_PacketSize = 0;
+	socketReferencePtr->packetSize = 0;
 
-	if (_SocketReference->_Packet != nullptr)
+	if (socketReferencePtr->packet != nullptr)
 	{
-		delete _SocketReference->_Packet;
-		_SocketReference->_Packet = nullptr;
+		delete socketReferencePtr->packet;
+		socketReferencePtr->packet = nullptr;
 	}
 
-	_SocketReference->_Socket = other._SocketReference->_Socket;
-	_SocketReference->_Connected = other._SocketReference->_Connected;
-	memcpy((void*)&_SocketReference->_ServerAddress, (void*)&other._SocketReference->_ServerAddress, sizeof(sockaddr_in));
+	socketReferencePtr->socketFd = other.socketReferencePtr->socketFd;
+	socketReferencePtr->connected = other.socketReferencePtr->connected;
+	memcpy((void*)&socketReferencePtr->serverAddress, (void*)&other.socketReferencePtr->serverAddress, sizeof(sockaddr_in));
 
-	if (other._SocketReference->_PreFetchedBufferSize > 0)
+	if (other.socketReferencePtr->preFetchedBufferSize > 0)
 	{
-		_SocketReference->_PreFetchedBuffer = new unsigned char[other._SocketReference->_PreFetchedBufferSize];
-		_SocketReference->_PreFetchedBufferSize = other._SocketReference->_PreFetchedBufferSize;
-		memcpy((unsigned char*)&_SocketReference->_PreFetchedBuffer, (unsigned char*)&other._SocketReference->_PreFetchedBuffer, _SocketReference->_PreFetchedBufferSize);
+		socketReferencePtr->preFetchedBuffer = new unsigned char[other.socketReferencePtr->preFetchedBufferSize];
+		socketReferencePtr->preFetchedBufferSize = other.socketReferencePtr->preFetchedBufferSize;
+		memcpy((unsigned char*)&socketReferencePtr->preFetchedBuffer, (unsigned char*)&other.socketReferencePtr->preFetchedBuffer, socketReferencePtr->preFetchedBufferSize);
 	}
 
-	if (other._SocketReference->_PacketSize > 0)
+	if (other.socketReferencePtr->packetSize > 0)
 	{
-		_SocketReference->_Packet = new unsigned char[other._SocketReference->_PacketSize];
-		_SocketReference->_PacketSize = other._SocketReference->_PacketSize;
-		memcpy((unsigned char*)&_SocketReference->_Packet, (unsigned char*)&other._SocketReference->_Packet, _SocketReference->_PacketSize);
+		socketReferencePtr->packet = new unsigned char[other.socketReferencePtr->packetSize];
+		socketReferencePtr->packetSize = other.socketReferencePtr->packetSize;
+		memcpy((unsigned char*)&socketReferencePtr->packet, (unsigned char*)&other.socketReferencePtr->packet, socketReferencePtr->packetSize);
 	}
 
-	_SocketReference->_Phv = other._SocketReference->_Phv;
+	socketReferencePtr->phv = other.socketReferencePtr->phv;
 
-	_SocketReference->_RequireSSL = other._SocketReference->_RequireSSL;
+	socketReferencePtr->requireSSL = other.socketReferencePtr->requireSSL;
 
-	_SocketReference->_CertificateBIO = other._SocketReference->_CertificateBIO;
-	_SocketReference->_Certificate = other._SocketReference->_Certificate;
-	_SocketReference->_CertificateName = other._SocketReference->_CertificateName;
-	_SocketReference->_SSLMethod = other._SocketReference->_SSLMethod;
-	_SocketReference->_SSLContext = other._SocketReference->_SSLContext;
-	_SocketReference->_SSLSession = other._SocketReference->_SSLSession;
+	socketReferencePtr->certificateBIO = other.socketReferencePtr->certificateBIO;
+	socketReferencePtr->certificate = other.socketReferencePtr->certificate;
+	socketReferencePtr->certificateName = other.socketReferencePtr->certificateName;
+	socketReferencePtr->SSLMethod = other.socketReferencePtr->SSLMethod;
+	socketReferencePtr->SSLContext = other.socketReferencePtr->SSLContext;
+	socketReferencePtr->SSLSession = other.socketReferencePtr->SSLSession;
 	return *this;
 }
 
 TcpClient::~TcpClient()
 {
-	closeSocket();
-	while (isConnected() == true)
+	CloseSocket();
+	while (IsConnected() == true)
 	{
 	}
 
-	if (_SocketReference != nullptr)
+	if (socketReferencePtr != nullptr)
 	{
-		if (_SocketReference->_PreFetchedBuffer != nullptr)
+		if (socketReferencePtr->preFetchedBuffer != nullptr)
 		{
-			delete _SocketReference->_PreFetchedBuffer;
+			delete socketReferencePtr->preFetchedBuffer;
 		}
 
-		delete _SocketReference;
+		delete socketReferencePtr;
 	}
 }
 
-void TcpClient::setPacketDelimeter(char * str)
+void TcpClient::SetPacketDelimeter(char * str)
 {
-	_SocketReference->_Phv = Delimited;
-	memcpy(_SocketReference->_PacketDelimeter, str, strlen(str));
+	socketReferencePtr->phv = Delimited;
+	memcpy(socketReferencePtr->packetDelimeter, str, strlen(str));
 }
 
-void TcpClient::setPacketLength(long len)
+void TcpClient::SetPacketLength(long len)
 {
-	_SocketReference->_Phv = FixedLength;
-	_SocketReference->_PacketSize = len;
+	socketReferencePtr->phv = FixedLength;
+	socketReferencePtr->packetSize = len;
 }
 
-bool TcpClient::createSocket(const char* servername, int serverport, bool requireSSL)
+bool TcpClient::CreateSocket(const char* servername, int serverport, bool requireSSL)
 {
-	_SocketReference->_ServerName = servername;
-	_SocketReference->_ServerPort = serverport;
-	_SocketReference->_RequireSSL = requireSSL;
+	socketReferencePtr->serverName = servername;
+	socketReferencePtr->serverPort = serverport;
+	socketReferencePtr->requireSSL = requireSSL;
 
-	_SocketReference->_ServerAddress.sin_family = AF_INET;
-	_SocketReference->_ServerAddress.sin_port = htons(serverport);
+	socketReferencePtr->serverAddress.sin_family = AF_INET;
+	socketReferencePtr->serverAddress.sin_port = htons(serverport);
 	u_long nRemoteAddr;
 
 	char ipbuffer[32] = { 0 };
 	memcpy(ipbuffer, servername, 31);
 
-	bool ip = Network::isIP4Address(ipbuffer);
+	bool ip = Network::IsIP4Address(ipbuffer);
 
 	if (!ip)
 	{
-		hostent* pHE = gethostbyname(_SocketReference->_ServerName.c_str());
+		hostent* pHE = gethostbyname(socketReferencePtr->serverName.c_str());
 		if (pHE == 0)
 		{
 			nRemoteAddr = INADDR_NONE;
 			return false;
 		}
 		nRemoteAddr = *((u_long*)pHE->h_addr_list[0]);
-		_SocketReference->_ServerAddress.sin_addr.s_addr = nRemoteAddr;
+		socketReferencePtr->serverAddress.sin_addr.s_addr = nRemoteAddr;
 	}
 	else
 	{
-		inet_pton(AF_INET, _SocketReference->_ServerName.c_str(), &_SocketReference->_ServerAddress.sin_addr);
+		inet_pton(AF_INET, socketReferencePtr->serverName.c_str(), &socketReferencePtr->serverAddress.sin_addr);
 	}
 
-	if (_SocketReference->_RequireSSL)
+	if (socketReferencePtr->requireSSL)
 	{
-		_SocketReference->_CertificateBIO = BIO_new(BIO_s_file());
+		socketReferencePtr->certificateBIO = BIO_new(BIO_s_file());
 
 		if (SSL_library_init() < 0)
 		{
 			return false;
 		}
 
-		_SocketReference->_SSLMethod = SSLv23_client_method();
+		socketReferencePtr->SSLMethod = SSLv23_client_method();
 
-		if ((_SocketReference->_SSLContext = SSL_CTX_new(_SocketReference->_SSLMethod)) == nullptr)
+		if ((socketReferencePtr->SSLContext = SSL_CTX_new(socketReferencePtr->SSLMethod)) == nullptr)
 		{
 			return false;
 		}
 
-		SSL_CTX_set_options(_SocketReference->_SSLContext, SSL_OP_NO_SSLv2);
+		SSL_CTX_set_options(socketReferencePtr->SSLContext, SSL_OP_NO_SSLv2);
 
-		_SocketReference->_SSLSession = SSL_new(_SocketReference->_SSLContext);
+		socketReferencePtr->SSLSession = SSL_new(socketReferencePtr->SSLContext);
 
-		_SocketReference->_Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		socketReferencePtr->socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-		SSL_set_fd(_SocketReference->_SSLSession, _SocketReference->_Socket);
+		SSL_set_fd(socketReferencePtr->SSLSession, socketReferencePtr->socketFd);
 	}
 	else
 	{
-		_SocketReference->_Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		socketReferencePtr->socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-		if (_SocketReference->_Socket == INVALID_SOCKET)
+		if (socketReferencePtr->socketFd == INVALID_SOCKET)
 		{
 			return false;
 		}
@@ -340,139 +364,139 @@ bool TcpClient::createSocket(const char* servername, int serverport, bool requir
 	return true;
 }
 
-bool TcpClient::createSocket(unsigned long inSocket, bool requireSSL)
+bool TcpClient::CreateSocket(unsigned long inSocket, bool requireSSL)
 {
-	_SocketReference->_RequireSSL = requireSSL;
-	_SocketReference->_Socket = inSocket;
-	_SocketReference->_Connected = true;
+	socketReferencePtr->requireSSL = requireSSL;
+	socketReferencePtr->socketFd = inSocket;
+	socketReferencePtr->connected = true;
 	return true;
 }
 
-bool TcpClient::connectSocket(int &returncode)
+bool TcpClient::ConnectSocket(int &returncode)
 {
-	if (_SocketReference->_Connected == true)
+	if (socketReferencePtr->connected == true)
 	{
 		return true;
 	}
 
-	returncode = connect(_SocketReference->_Socket, (sockaddr*)&_SocketReference->_ServerAddress, sizeof(sockaddr_in));
+	returncode = connect(socketReferencePtr->socketFd, (sockaddr*)&socketReferencePtr->serverAddress, sizeof(sockaddr_in));
 
 	if (returncode == SOCKET_ERROR)
 	{
 		returncode = socketerror;
 
-		shutdown(_SocketReference->_Socket, 2);
-		closesocket(_SocketReference->_Socket);
-		_SocketReference->_Connected = false;
+		shutdown(socketReferencePtr->socketFd, 2);
+		closesocket(socketReferencePtr->socketFd);
+		socketReferencePtr->connected = false;
 
 		return false;
 	}
 
-	if (_SocketReference->_RequireSSL)
+	if (socketReferencePtr->requireSSL)
 	{
-		if (SSL_connect(_SocketReference->_SSLSession) != 1)
+		if (SSL_connect(socketReferencePtr->SSLSession) != 1)
 		{
-			SSL_free(_SocketReference->_SSLSession);
-			shutdown(_SocketReference->_Socket, 2);
-			closesocket(_SocketReference->_Socket);
-			X509_free(_SocketReference->_Certificate);
-			SSL_CTX_free(_SocketReference->_SSLContext);
-			_SocketReference->_Connected = false;
+			SSL_free(socketReferencePtr->SSLSession);
+			shutdown(socketReferencePtr->socketFd, 2);
+			closesocket(socketReferencePtr->socketFd);
+			X509_free(socketReferencePtr->certificate);
+			SSL_CTX_free(socketReferencePtr->SSLContext);
+			socketReferencePtr->connected = false;
 
 			return false;
 		}
 
-		_SocketReference->_Certificate = SSL_get_peer_certificate(_SocketReference->_SSLSession);
+		socketReferencePtr->certificate = SSL_get_peer_certificate(socketReferencePtr->SSLSession);
 
-		if (_SocketReference->_Certificate != nullptr)
+		if (socketReferencePtr->certificate != nullptr)
 		{
-			_SocketReference->_CertificateName = X509_NAME_new();
-			_SocketReference->_CertificateName = X509_get_subject_name(_SocketReference->_Certificate);
-			_SocketReference->_CertificateNamePrintable = X509_NAME_oneline(_SocketReference->_CertificateName, 0, 0);
+			socketReferencePtr->certificateName = X509_NAME_new();
+			socketReferencePtr->certificateName = X509_get_subject_name(socketReferencePtr->certificate);
+			socketReferencePtr->certificateNamePrintable = X509_NAME_oneline(socketReferencePtr->certificateName, 0, 0);
 		}
 	}
 
-	_SocketReference->_Connected = true;
+	socketReferencePtr->connected = true;
 	return true;
 }
 
-bool TcpClient::switchToSecureMode()
+bool TcpClient::SwitchToSecureMode()
 {
-	_SocketReference->_RequireSSL = true;
+	socketReferencePtr->requireSSL = true;
 
-	_SocketReference->_CertificateBIO = BIO_new(BIO_s_file());
+	socketReferencePtr->certificateBIO = BIO_new(BIO_s_file());
 
 	if (SSL_library_init() < 0)
 	{
 		return false;
 	}
 
-	_SocketReference->_SSLMethod = SSLv23_client_method();
+	socketReferencePtr->SSLMethod = SSLv23_client_method();
 
-	if ((_SocketReference->_SSLContext = SSL_CTX_new(_SocketReference->_SSLMethod)) == nullptr)
+	if ((socketReferencePtr->SSLContext = SSL_CTX_new(socketReferencePtr->SSLMethod)) == nullptr)
 	{
 		return false;
 	}
 
-	SSL_CTX_set_options(_SocketReference->_SSLContext, SSL_OP_NO_SSLv2);
+	SSL_CTX_set_options(socketReferencePtr->SSLContext, SSL_OP_NO_SSLv2);
 
-	_SocketReference->_SSLSession = SSL_new(_SocketReference->_SSLContext);
+	socketReferencePtr->SSLSession = SSL_new(socketReferencePtr->SSLContext);
 
-	SSL_set_fd(_SocketReference->_SSLSession, _SocketReference->_Socket);
+	SSL_set_fd(socketReferencePtr->SSLSession, socketReferencePtr->socketFd);
 
-	if (SSL_connect(_SocketReference->_SSLSession) != 1)
+	if (SSL_connect(socketReferencePtr->SSLSession) != 1)
 	{
-		SSL_free(_SocketReference->_SSLSession);
-		shutdown(_SocketReference->_Socket, 2);
-		closesocket(_SocketReference->_Socket);
-		X509_free(_SocketReference->_Certificate);
-		SSL_CTX_free(_SocketReference->_SSLContext);
-		_SocketReference->_Connected = false;
+		SSL_free(socketReferencePtr->SSLSession);
+		shutdown(socketReferencePtr->socketFd, 2);
+		closesocket(socketReferencePtr->socketFd);
+		X509_free(socketReferencePtr->certificate);
+		SSL_CTX_free(socketReferencePtr->SSLContext);
+		socketReferencePtr->connected = false;
 
 		return false;
 	}
 
-	_SocketReference->_Certificate = SSL_get_peer_certificate(_SocketReference->_SSLSession);
+	socketReferencePtr->certificate = SSL_get_peer_certificate(socketReferencePtr->SSLSession);
 
-	if (_SocketReference->_Certificate != nullptr)
+	if (socketReferencePtr->certificate != nullptr)
 	{
-		_SocketReference->_CertificateName = X509_NAME_new();
-		_SocketReference->_CertificateName = X509_get_subject_name(_SocketReference->_Certificate);
-		_SocketReference->_CertificateNamePrintable = X509_NAME_oneline(_SocketReference->_CertificateName, 0, 0);
+		socketReferencePtr->certificateName = X509_NAME_new();
+		socketReferencePtr->certificateName = X509_get_subject_name(socketReferencePtr->certificate);
+		socketReferencePtr->certificateNamePrintable = X509_NAME_oneline(socketReferencePtr->certificateName, 0, 0);
 	}
 
-	_SocketReference->_Connected = true;
+	socketReferencePtr->connected = true;
 
 	return true;
 }
 
-bool TcpClient::closeSocket()
+bool TcpClient::CloseSocket()
 {
-	if (_SocketReference != nullptr)
+	if (socketReferencePtr != nullptr)
 	{
-		if (_SocketReference->_Connected)
+		if (socketReferencePtr->connected)
 		{
-			if (_SocketReference->_RequireSSL)
+			if (socketReferencePtr->requireSSL)
 			{
-				SSL_shutdown(_SocketReference->_SSLSession);
-				SSL_free(_SocketReference->_SSLSession);
-				shutdown(_SocketReference->_Socket, 0);
-				closesocket(_SocketReference->_Socket);
-				X509_free(_SocketReference->_Certificate);
-				SSL_CTX_free(_SocketReference->_SSLContext);
+				SSL_shutdown(socketReferencePtr->SSLSession);
+				SSL_free(socketReferencePtr->SSLSession);
+				shutdown(socketReferencePtr->socketFd, 0);
+				closesocket(socketReferencePtr->socketFd);
+				X509_free(socketReferencePtr->certificate);
+				SSL_CTX_free(socketReferencePtr->SSLContext);
 			}
 			else
 			{
-				shutdown(_SocketReference->_Socket, 0);
-				closesocket(_SocketReference->_Socket);
+				shutdown(socketReferencePtr->socketFd, 0);
+				closesocket(socketReferencePtr->socketFd);
 			}
 		}
-		_SocketReference->_Connected = false;
+		socketReferencePtr->connected = false;
 	}
 	return false;
 }
 
-bool TcpClient::receiveString(std::string &ioStr, const char *delimeter)
+bool TcpClient::ReceiveString(std::string &ioStr, const char *delimeter)
 {
 	char	buffer[1025] = { 0 };
 	long	returnvalue;
@@ -481,55 +505,55 @@ bool TcpClient::receiveString(std::string &ioStr, const char *delimeter)
 
 	data.clear();
 
-	if (_SocketReference->_PreFetchedBufferSize > 0)
+	if (socketReferencePtr->preFetchedBufferSize > 0)
 	{
-		if (strstr((char*)_SocketReference->_PreFetchedBuffer, delimeter) != 0)
+		if (strstr((char*)socketReferencePtr->preFetchedBuffer, delimeter) != 0)
 		{
-			std::string temp = (char*)_SocketReference->_PreFetchedBuffer;
+			std::string temp = (char*)socketReferencePtr->preFetchedBuffer;
 			std::string tempdelim = delimeter;
 			strsplit(temp, tempdelim, currentLine, nextLine);
 
 			ioStr = currentLine;
 			currentLine.clear();
 
-			delete _SocketReference->_PreFetchedBuffer;
-			_SocketReference->_PreFetchedBuffer = nullptr;
-			_SocketReference->_PreFetchedBufferSize = nextLine.length();
+			delete socketReferencePtr->preFetchedBuffer;
+			socketReferencePtr->preFetchedBuffer = nullptr;
+			socketReferencePtr->preFetchedBufferSize = nextLine.length();
 
-			if (_SocketReference->_PreFetchedBufferSize > 0)
+			if (socketReferencePtr->preFetchedBufferSize > 0)
 			{
-				_SocketReference->_PreFetchedBuffer = new unsigned char[_SocketReference->_PreFetchedBufferSize + 1];
-				memset(_SocketReference->_PreFetchedBuffer, 0, _SocketReference->_PreFetchedBufferSize + 1);
-				memcpy(_SocketReference->_PreFetchedBuffer, nextLine.c_str(), _SocketReference->_PreFetchedBufferSize);
+				socketReferencePtr->preFetchedBuffer = new unsigned char[socketReferencePtr->preFetchedBufferSize + 1];
+				memset(socketReferencePtr->preFetchedBuffer, 0, socketReferencePtr->preFetchedBufferSize + 1);
+				memcpy(socketReferencePtr->preFetchedBuffer, nextLine.c_str(), socketReferencePtr->preFetchedBufferSize);
 			}
 
 			return true;
 		}
 
-		data = (char*)_SocketReference->_PreFetchedBuffer;
-		_SocketReference->_PreFetchedBufferSize = 0;
-		delete _SocketReference->_PreFetchedBuffer;
-		_SocketReference->_PreFetchedBuffer = nullptr;
+		data = (char*)socketReferencePtr->preFetchedBuffer;
+		socketReferencePtr->preFetchedBufferSize = 0;
+		delete socketReferencePtr->preFetchedBuffer;
+		socketReferencePtr->preFetchedBuffer = nullptr;
 	}
 
 	while (true)
 	{
 		memset(&buffer[0], 0, 1025);
 
-		if (_SocketReference->_RequireSSL)
+		if (socketReferencePtr->requireSSL)
 		{
-			returnvalue = SSL_read(_SocketReference->_SSLSession, &buffer[0], 1024);
+			returnvalue = SSL_read(socketReferencePtr->SSLSession, &buffer[0], 1024);
 		}
 		else
 		{
-			returnvalue = recv(_SocketReference->_Socket, &buffer[0], 1024, 0);
+			returnvalue = recv(socketReferencePtr->socketFd, &buffer[0], 1024, 0);
 		}
 
 		if (returnvalue < 1)
 		{
 			int error = socketerror;
 			ioStr.clear();
-			_SocketReference->_Connected = false;
+			socketReferencePtr->connected = false;
 			return false;
 		}
 
@@ -540,13 +564,13 @@ bool TcpClient::receiveString(std::string &ioStr, const char *delimeter)
 			std::string tempdelim = delimeter;
 			strsplit(data, tempdelim, currentLine, nextLine);
 
-			_SocketReference->_PreFetchedBufferSize = nextLine.length();
+			socketReferencePtr->preFetchedBufferSize = nextLine.length();
 
-			if (_SocketReference->_PreFetchedBufferSize > 0)
+			if (socketReferencePtr->preFetchedBufferSize > 0)
 			{
-				_SocketReference->_PreFetchedBuffer = new unsigned char[_SocketReference->_PreFetchedBufferSize + 1];
-				memset(_SocketReference->_PreFetchedBuffer, 0, _SocketReference->_PreFetchedBufferSize + 1);
-				memcpy(_SocketReference->_PreFetchedBuffer, nextLine.c_str(), _SocketReference->_PreFetchedBufferSize);
+				socketReferencePtr->preFetchedBuffer = new unsigned char[socketReferencePtr->preFetchedBufferSize + 1];
+				memset(socketReferencePtr->preFetchedBuffer, 0, socketReferencePtr->preFetchedBufferSize + 1);
+				memcpy(socketReferencePtr->preFetchedBuffer, nextLine.c_str(), socketReferencePtr->preFetchedBufferSize);
 			}
 
 			ioStr = currentLine;
@@ -559,7 +583,7 @@ bool TcpClient::receiveString(std::string &ioStr, const char *delimeter)
 	return true;
 }
 
-bool TcpClient::receiveString(std::string& ioStr)
+bool TcpClient::ReceiveString(std::string& ioStr)
 {
 	char	buffer[1025];
 	long	returnvalue;
@@ -567,20 +591,20 @@ bool TcpClient::receiveString(std::string& ioStr)
 
 	memset(&buffer[0], 0, 1025);
 
-	if (_SocketReference->_RequireSSL)
+	if (socketReferencePtr->requireSSL)
 	{
-		returnvalue = SSL_read(_SocketReference->_SSLSession, &buffer[0], 1024);
+		returnvalue = SSL_read(socketReferencePtr->SSLSession, &buffer[0], 1024);
 	}
 	else
 	{
-		returnvalue = recv(_SocketReference->_Socket, &buffer[0], 1024, 0);
+		returnvalue = recv(socketReferencePtr->socketFd, &buffer[0], 1024, 0);
 	}
 
 	if (returnvalue < 1)
 	{
 		int error = socketerror;
 		ioStr.clear();
-		_SocketReference->_Connected = false;
+		socketReferencePtr->connected = false;
 		return false;
 	}
 
@@ -589,29 +613,29 @@ bool TcpClient::receiveString(std::string& ioStr)
 	return true;
 }
 
-bool TcpClient::receiveBuffer(int len)
+bool TcpClient::ReceiveBuffer(int len)
 {
 	char*	buffer = 0;
 	long	bufferpos = 0;
-	long	bytesread = 0;
-	long	bytesleft = len;
+	size_t	bytesread = 0;
+	size_t	bytesleft = len;
 
 	// If there are pre-fetched bytes left, we have to copy that first and relase memory
 
-	if (_SocketReference->_PreFetchedBufferSize > 0)
+	if (socketReferencePtr->preFetchedBufferSize > 0)
 	{
-		if (_SocketReference->_Packet != nullptr)
+		if (socketReferencePtr->packet != nullptr)
 		{
-			delete _SocketReference->_Packet;
-			_SocketReference->_Packet = nullptr;
+			delete socketReferencePtr->packet;
+			socketReferencePtr->packet = nullptr;
 		}
-		_SocketReference->_Packet = new unsigned char[_SocketReference->_PreFetchedBufferSize];
-		memcpy(_SocketReference->_Packet, _SocketReference->_PreFetchedBuffer, _SocketReference->_PreFetchedBufferSize);
-		bytesleft = len - _SocketReference->_PreFetchedBufferSize;
-		bufferpos = _SocketReference->_PreFetchedBufferSize;
-		_SocketReference->_PreFetchedBufferSize = 0;
-		delete _SocketReference->_PreFetchedBuffer;
-		_SocketReference->_PreFetchedBuffer = nullptr;
+		socketReferencePtr->packet = new unsigned char[socketReferencePtr->preFetchedBufferSize];
+		memcpy(socketReferencePtr->packet, socketReferencePtr->preFetchedBuffer, socketReferencePtr->preFetchedBufferSize);
+		bytesleft = len - socketReferencePtr->preFetchedBufferSize;
+		bufferpos = socketReferencePtr->preFetchedBufferSize;
+		socketReferencePtr->preFetchedBufferSize = 0;
+		delete socketReferencePtr->preFetchedBuffer;
+		socketReferencePtr->preFetchedBuffer = nullptr;
 
 		if (bytesleft < 1)
 		{
@@ -624,26 +648,26 @@ bool TcpClient::receiveBuffer(int len)
 		buffer = new char[bytesleft + 1];
 		memset(buffer, 0, bytesleft + 1);
 
-		if (_SocketReference->_RequireSSL)
+		if (socketReferencePtr->requireSSL)
 		{
-			bytesread =  SSL_read(_SocketReference->_SSLSession, buffer, bytesleft);
+			bytesread =  SSL_read(socketReferencePtr->SSLSession, buffer, bytesleft);
 		}
 		else
 		{
-			bytesread = recv(_SocketReference->_Socket, buffer, bytesleft, 0);
+			bytesread = recv(socketReferencePtr->socketFd, buffer, bytesleft, 0);
 		}
 
 		if (bytesread < 1)
 		{
 			int error = socketerror;
 			delete[] buffer;
-			_SocketReference->_Packet = nullptr;
+			socketReferencePtr->packet = nullptr;
 			len = 0;
-			_SocketReference->_Connected = false;
+			socketReferencePtr->connected = false;
 			return false;
 		}
 
-		memcpy(_SocketReference->_Packet + bufferpos, buffer, bytesread);
+		memcpy(socketReferencePtr->packet + bufferpos, buffer, bytesread);
 		delete[] buffer;
 
 		bufferpos = bufferpos + bytesread;
@@ -657,28 +681,28 @@ bool TcpClient::receiveBuffer(int len)
 	}
 }
 
-int TcpClient::pendingPreFetchedBufferSize()
+int TcpClient::PendingPreFetchedBufferSize()
 {
-	return _SocketReference->_PreFetchedBufferSize;
+	return socketReferencePtr->preFetchedBufferSize;
 }
 
 
-bool TcpClient::sendBuffer(const char* data, int &len)
+bool TcpClient::SendBuffer(const char* data, int &len)
 {
-	if (!_SocketReference->_Connected)
+	if (!socketReferencePtr->connected)
 	{
 		return false;
 	}
 
 	long sentsize = 0;
 
-	if (_SocketReference->_RequireSSL)
+	if (socketReferencePtr->requireSSL)
 	{
-		sentsize = SSL_write(_SocketReference->_SSLSession, data, len);
+		sentsize = SSL_write(socketReferencePtr->SSLSession, data, len);
 	}
 	else
 	{
-		sentsize = send(_SocketReference->_Socket, data, len, 0);
+		sentsize = send(socketReferencePtr->socketFd, data, len, 0);
 	}
 
 	if (sentsize == SOCKET_ERROR)
@@ -689,28 +713,28 @@ bool TcpClient::sendBuffer(const char* data, int &len)
 	return true;
 }
 
-bool TcpClient::sendString(const std::string &str)
+bool TcpClient::SendString(const std::string &str)
 {
 	int len = str.length();
-	bool ret = sendBuffer(str.c_str(), len);
+	bool ret = SendBuffer(str.c_str(), len);
 	return ret;
 }
 
-bool TcpClient::isConnected()
+bool TcpClient::IsConnected()
 {
-	if (_SocketReference == nullptr)
+	if (socketReferencePtr == nullptr)
 		return false;
-	return _SocketReference->_Connected;
+	return socketReferencePtr->connected;
 }
 
-unsigned long TcpClient::getSocket()
+unsigned long TcpClient::GetSocket()
 {
-	return _SocketReference->_Socket;
+	return socketReferencePtr->socketFd;
 }
 
-std::string* TcpClient::certificateName()
+std::string* TcpClient::CertificateName()
 {
-	if (_SocketReference == nullptr)
+	if (socketReferencePtr == nullptr)
 		return nullptr;
-	return &_SocketReference->_CertificateNamePrintable;
+	return &socketReferencePtr->certificateNamePrintable;
 }

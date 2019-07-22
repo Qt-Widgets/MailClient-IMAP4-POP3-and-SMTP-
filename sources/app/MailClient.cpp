@@ -67,27 +67,29 @@ void MailClient::TestIn()
 {
 	ImapClient climap;
 
-	//climap.setAccountInformation("outlook.office365.com", 993, "subrato.roy@collabera.com", "Spades@2019", 'S');
-	climap.setAccountInformation("rushpriority.com", 993, "subrato1@rushpriority.com", "roy1", 'S');
+	//climap.SetAccountInformation("outlook.office365.com", 993, "subrato.roy@collabera.com", "Spades@2019", (SecurityType)'S');
+	climap.SetAccountInformation("rushpriority.com", 993, "subrato1@rushpriority.com", "roy1", (SecurityType)'S');
 
-	if (climap.connect())
+	if (climap.Connect())
 	{
-		if (climap.getCapabilities())
+		if (climap.GetCapabilities())
 		{
-			if (climap.login())
+			if (climap.Login())
 			{
 				std::vector<std::string> dlist;
 
-				if (climap.getDirectoryList(dlist))
+				if (climap.GetDirectoryList(dlist))
 				{
 					unsigned long count, uidnext;
 
-					if (climap.getDirectory("INBOX", count, uidnext))
+					if (climap.GetDirectory("INBOX", count, uidnext))
 					{
 						std::string uidstr;
 						std::string fromdate = "17-JUL-2019";
 
-						climap.getDirectory("INBOX", fromdate, uidstr);
+						unsigned long email_count, uid_next;
+
+						climap.GetDirectory("INBOX", email_count, uid_next);
 
 						std::vector<std::string> uidlist;
 
@@ -95,19 +97,19 @@ void MailClient::TestIn()
 
 						for (std::string str : uidlist)
 						{
-							if (climap.getMessageHeader(atoi(str.c_str())))
+							if (climap.GetMessageHeader(atoi(str.c_str())))
 							{
-								climap.getMessageBody(atoi(str.c_str()));
+								climap.GetMessageBody(atoi(str.c_str()));
 							}
 						}
 					}
 				}
 			}
-			climap.logout();
+			climap.Logout();
 		}
 	}
 
-	climap.disconnect();
+	climap.Disconnect();
 }
 
 void MailClient::TestOut()
@@ -119,14 +121,14 @@ void MailClient::TestOut()
 	std::string request = "GET / HTTP/1.1\r\nHost: api.ipify.org\r\nConnection: close\r\n\r\n";
 	std::string response = "";
 
-	if (cl.createSocket("api.ipify.org", 443, true))
+	if (cl.CreateSocket("api.ipify.org", 443, true))
 	{
 		int retcode = 0;
-		if (cl.connectSocket(retcode))
+		if (cl.ConnectSocket(retcode))
 		{
-			cl.sendString(request);
+			cl.SendString(request);
 
-			cl.receiveString(response);
+			cl.ReceiveString(response);
 
 			std::vector<std::string> tokens;
 
@@ -157,36 +159,36 @@ void MailClient::TestOut()
 	bdy.serialize(serialized_body);
 
 	SmtpClient clsmtp;
-	clsmtp.setAccountInformation("smtp.office365.com", 587, "subrato.roy@collabera.com", "Spades@2019", 'N');
-	clsmtp.setPublicIp(publicIpAddress);
+	clsmtp.SetAccountInformation("smtp.office365.com", 587, "subrato.roy@collabera.com", "Spades@2019", (SecurityType)'N');
+	clsmtp.SetPublicIp(publicIpAddress);
 
-	if (clsmtp.connect())
+	if (clsmtp.Connect())
 	{
-		if (clsmtp.sendHelo())
+		if (clsmtp.SendHelo())
 		{
-			if (clsmtp.needTls())
+			if (clsmtp.NeedTls())
 			{
-				if (clsmtp.startTls())
+				if (clsmtp.StartTls())
 				{
-					if (clsmtp.sendHelo())
+					if (clsmtp.SendHelo())
 					{
-						if (clsmtp.login())
+						if (clsmtp.Login())
 						{
-							clsmtp.sendMail(hdr, bdy);
-							clsmtp.logout();
+							clsmtp.SendMail(hdr, bdy);
+							clsmtp.Logout();
 						}
 					}
 				}
 			}
 			else
 			{
-				if (clsmtp.login())
+				if (clsmtp.Login())
 				{
-					clsmtp.sendMail(hdr, bdy);
-					clsmtp.logout();
+					clsmtp.SendMail(hdr, bdy);
+					clsmtp.Logout();
 				}
 			}
 		}
 	}
-	clsmtp.disconnect();
+	clsmtp.Disconnect();
 }

@@ -15,60 +15,70 @@ public:
 
 SmtpClient::SmtpClient()
 {
-	_Host = "";
-	_Username = "";
-	_Password = "";
-	_Port = 25;
-	_SendHelo = true;
-	_SecurityType = 'N';
-	_StartTls = false;
+	host = "";
+	username = "";
+	password = "";
+	port = 25;
+	securityType = None;
+	startTls = false;
 
-	_BearerPtr = new SmtpBearer();
+	bearerPtr = new SmtpBearer();
 }
 
-SmtpClient::SmtpClient(const std::string host, uint16_t port, std::string username, std::string password, char sectype, bool sendhelo)
+SmtpClient::SmtpClient(const std::string hoststr, uint16_t portstr, std::string usernamestr, std::string passwordstr, SecurityType sectype)
 {
-	_Host = host;
-	_Username = username;
-	_Password = password;
-	_Port = port;
-	_SendHelo = sendhelo;
-	_SecurityType = sectype;
-	_StartTls = false;
+	host = hoststr;
+	username = usernamestr;
+	password = passwordstr;
+	port = portstr;
+	securityType = sectype;
+	startTls = false;
 
-	_BearerPtr = new SmtpBearer();
+	bearerPtr = new SmtpBearer();
 }
 
 SmtpClient::~SmtpClient()
 {
-    if (_BearerPtr)
+    if (bearerPtr)
     {
-        _BearerPtr->cl.closeSocket();
+        bearerPtr->cl.CloseSocket();
     }
 }
 
-void SmtpClient::setAccountInformation(const std::string host, uint16_t port, std::string username, std::string password, char sectype, bool sendhelo)
+void SmtpClient::SetAccountInformation(const std::string hoststr, uint16_t portstr, std::string usernamestr, std::string passwordstr, SecurityType sectype)
 {
-	_Host = host;
-	_Username = username;
-	_Password = password;
-	_Port = port;
-	_SendHelo = sendhelo;
-	_SecurityType = sectype;
-	_StartTls = false;
+	host = hoststr;
+	username = usernamestr;
+	password = passwordstr;
+	port = portstr;
+	securityType = sectype;
+	startTls = false;
 
     return;
 }
 
-bool SmtpClient::connect()
+bool SmtpClient::Connect()
 {
+	bool need_ssl = false;
+
+	// Note: For SMTP TLS sessions starts on plain sockets and switches to SSL sockets after STARTTLS negotiation
+	if (securityType == None || securityType == Tls)
+	{
+		need_ssl = false;
+	}
+	else
+	{
+		need_ssl = true;
+	}
+
     int retcode;
-    if (_BearerPtr->cl.createSocket(_Host.c_str(), _Port, false))
+
+    if (bearerPtr->cl.CreateSocket(host.c_str(), port, need_ssl))
     {
-        if (_BearerPtr->cl.connectSocket(retcode))
+        if (bearerPtr->cl.ConnectSocket(retcode))
         {
 			std::string resp;
-			_BearerPtr->cl.receiveString(resp);
+			bearerPtr->cl.ReceiveString(resp);
             return true;
         }
     }
@@ -76,38 +86,38 @@ bool SmtpClient::connect()
     return false;
 }
 
-bool SmtpClient::disconnect()
+bool SmtpClient::Disconnect()
 {
-	if (_BearerPtr->cl.isConnected())
+	if (bearerPtr->cl.IsConnected())
 	{
-		return _BearerPtr->cl.closeSocket();
+		return bearerPtr->cl.CloseSocket();
 	}
 
 	return false;
 }
 
-bool SmtpClient::sendHelo()
+bool SmtpClient::SendHelo()
 {
     std::string resp;
     char buff[128] = { 0 };
-    sprintf(buff, "EHLO %s\r\n", _PublicIp.c_str());
+    sprintf(buff, "EHLO %s\r\n", publicIp.c_str());
 
     std::string helo = buff;
-    _BearerPtr->cl.sendString(helo);
+    bearerPtr->cl.SendString(helo);
 
     while (true)
     {
-		if (!_BearerPtr->cl.receiveString(resp))
+		if (!bearerPtr->cl.ReceiveString(resp))
 		{
 		    return false;
 		}
 
 		if (strcontains(resp.c_str(), "STARTTLS"))
 		{
-			_StartTls = true;
+			startTls = true;
 		}
 
-        if(_BearerPtr->cl.pendingPreFetchedBufferSize() < 1)
+        if(bearerPtr->cl.PendingPreFetchedBufferSize() < 1)
         {
             return true;
         }
@@ -116,22 +126,22 @@ bool SmtpClient::sendHelo()
     return false;
 }
 
-void SmtpClient::setPublicIp(std::string& ip)
+void SmtpClient::SetPublicIp(std::string& ip)
 {
-	_PublicIp = ip;
+	publicIp = ip;
 }
 
-std::string SmtpClient::account()
+std::string SmtpClient::Account()
 {
-    return _Username;
+    return username;
 }
 
-std::string SmtpClient::error()
+std::string SmtpClient::Error()
 {
-	return _Error;
+	return error;
 }
 
-bool SmtpClient::sendMail(MailHeader &ehdr, MailBody &ebdy)
+bool SmtpClient::SendMail(MailHeader &ehdr, MailBody &ebdy)
 {
 	std::vector<std::string> all_rcpt;
 
@@ -158,13 +168,13 @@ bool SmtpClient::sendMail(MailHeader &ehdr, MailBody &ebdy)
 	char buff[128] = { 0 };
 
 	memset(buff, 0, 128);
-	sprintf(buff, "MAIL FROM: <%s>\r\n", _Username.c_str());
+	sprintf(buff, "MAIL FROM: <%s>\r\n", username.c_str());
 
-	_BearerPtr->cl.sendString(buff);
+	bearerPtr->cl.SendString(buff);
 
 	while (true)
 	{
-		if (!_BearerPtr->cl.receiveString(resp))
+		if (!bearerPtr->cl.ReceiveString(resp))
 		{
 			return false;
 		}
@@ -174,7 +184,7 @@ bool SmtpClient::sendMail(MailHeader &ehdr, MailBody &ebdy)
 		{
 			memset(buff, 0, 128);
 			sprintf(buff, "RCPT TO: <%s>\r\n", all_rcpt[sent].c_str());
-			_BearerPtr->cl.sendString(buff);
+			bearerPtr->cl.SendString(buff);
 			sent++;
 			continue;
 		}
@@ -186,13 +196,13 @@ bool SmtpClient::sendMail(MailHeader &ehdr, MailBody &ebdy)
 			{
 				memset(buff, 0, 128);
 				sprintf(buff, "DATA\r\n");
-				_BearerPtr->cl.sendString(buff);
+				bearerPtr->cl.SendString(buff);
 			}
 			else
 			{
 				memset(buff, 0, 128);
 				sprintf(buff, "RCPT TO: <%s>\r\n", all_rcpt[sent].c_str());
-				_BearerPtr->cl.sendString(buff);
+				bearerPtr->cl.SendString(buff);
 				sent++;
 			}
 			continue;
@@ -202,7 +212,7 @@ bool SmtpClient::sendMail(MailHeader &ehdr, MailBody &ebdy)
 		{
 			std::string data;
 			ehdr.serialize(data, &ebdy);
-			_BearerPtr->cl.sendString(data);
+			bearerPtr->cl.SendString(data);
 			continue;
 		}
 
@@ -216,19 +226,19 @@ bool SmtpClient::sendMail(MailHeader &ehdr, MailBody &ebdy)
 	return ret;
 }
 
-bool SmtpClient::startTls()
+bool SmtpClient::StartTls()
 {
 	std::string resp;
 	char buff[128] = { 0 };
 	sprintf(buff, "STARTTLS\r\n");
 
-	_BearerPtr->cl.sendString(buff);
+	bearerPtr->cl.SendString(buff);
 
 	bool handshake_ok = false;
 
 	while (true)
 	{
-		if (!_BearerPtr->cl.receiveString(resp))
+		if (!bearerPtr->cl.ReceiveString(resp))
 		{
 			return false;
 		}
@@ -238,21 +248,21 @@ bool SmtpClient::startTls()
 			handshake_ok = true;
 		}
 
-		if (_BearerPtr->cl.pendingPreFetchedBufferSize() < 1)
+		if (bearerPtr->cl.PendingPreFetchedBufferSize() < 1)
 		{
 			break;
 		}
 	}
 
-	return _BearerPtr->cl.switchToSecureMode();
+	return bearerPtr->cl.SwitchToSecureMode();
 }
 
-bool SmtpClient::needTls()
+bool SmtpClient::NeedTls()
 {
-	return _StartTls;
+	return startTls;
 }
 
-bool SmtpClient::login()
+bool SmtpClient::Login()
 {
 	std::string resp;
 	std::vector<std::string> tokens;
@@ -262,11 +272,11 @@ bool SmtpClient::login()
 	sprintf(buff, "AUTH LOGIN\r\n");
 	int len = (int)strlen(buff);
 
-	_BearerPtr->cl.sendString(buff);
+	bearerPtr->cl.SendString(buff);
 
 	while (true)
 	{
-		if (!_BearerPtr->cl.receiveString(resp))
+		if (!bearerPtr->cl.ReceiveString(resp))
 		{
 			return false;
 		}
@@ -288,23 +298,23 @@ bool SmtpClient::login()
 			if (strcontains(decoded_str.c_str(), "Username"))
 			{
 				std::string encoded_uname;
-				codec_b64.EncodeBase64((unsigned char*)_Username.c_str(), _Username.length(), olen, encoded_uname);
+				codec_b64.EncodeBase64((unsigned char*)username.c_str(), username.length(), olen, encoded_uname);
 				encoded_uname += "\r\n";
-				_BearerPtr->cl.sendString(encoded_uname);
+				bearerPtr->cl.SendString(encoded_uname);
 				continue;
 			}
 
 			if (strcontains(decoded_str.c_str(), "Password"))
 			{
 				std::string encoded_password;
-				codec_b64.EncodeBase64((unsigned char*)_Password.c_str(), _Password.length(), olen, encoded_password);
+				codec_b64.EncodeBase64((unsigned char*)password.c_str(), password.length(), olen, encoded_password);
 				encoded_password += "\r\n";
-				_BearerPtr->cl.sendString(encoded_password);
+				bearerPtr->cl.SendString(encoded_password);
 				continue;
 			}
 		}
 
-		if (_BearerPtr->cl.pendingPreFetchedBufferSize() < 1)
+		if (bearerPtr->cl.PendingPreFetchedBufferSize() < 1)
 		{
 			tokens.clear();
 			strsplit(resp, tokens, ' ');
@@ -321,7 +331,7 @@ bool SmtpClient::login()
 	return false;
 }
 
-bool SmtpClient::logout()
+bool SmtpClient::Logout()
 {
 	std::string resp;
 	std::vector<std::string> tokens;
@@ -331,11 +341,11 @@ bool SmtpClient::logout()
 	sprintf(buff, "QUIT\r\n");
 	int len = (int)strlen(buff);
 
-	_BearerPtr->cl.sendString(buff);
+	bearerPtr->cl.SendString(buff);
 
 	while (true)
 	{
-		if (!_BearerPtr->cl.receiveString(resp))
+		if (!bearerPtr->cl.ReceiveString(resp))
 		{
 			return false;
 		}

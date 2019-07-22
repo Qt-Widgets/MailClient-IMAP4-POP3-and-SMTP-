@@ -1,8 +1,8 @@
 #ifndef _IMAP_CLIENT
 #define _IMAP_CLIENT
 
-#include "../data/Mail.h"
-#include "../data/SecurityType.h"
+#include "Mail.h"
+#include "SecurityType.h"
 #include <string>
 
 using namespace std;
@@ -13,38 +13,38 @@ class ImapClient
 {
 public:
     ImapClient();
-    ImapClient(const std::string &host, uint16_t port, std::string username, std::string password, char sectype);
+    ImapClient(const std::string &hoststr, uint16_t portstr, std::string usernamestr, std::string passwordstr, SecurityType sectype);
     ~ImapClient();
 
-    void setAccountInformation(const std::string &host, uint16_t port, std::string username, std::string password, char sectype);
-	bool disconnect();
-	bool connect();
-    bool getDirectoryList(std::vector<std::string> &dirList);
-	bool getCapabilities();
-	bool login();
-	bool logout();
-	bool getDirectory(std::string dirname, unsigned long &emailCount, unsigned long& uidNext);
+    void SetAccountInformation(const std::string &hoststr, uint16_t portstr, std::string usernamestr, std::string passwordstr, SecurityType sectype);
+	bool Disconnect();
+	bool Connect();
+    bool GetDirectoryList(std::vector<std::string> &dirList);
+	bool GetCapabilities();
+	bool Login();
+	bool Logout();
+	bool GetDirectory(std::string dirname, unsigned long &emailCount, unsigned long& uidNext);
 	bool getEmailsSince(std::string dirname, std::string &fromdate, std::string &uidlist);
-	bool getEmailsPrior(std::string dirname, std::string& fromdate, std::string& uidlist);
-	bool getMessageHeader(long uid);
-	bool getMessageBody(long uid);
-	bool deleteMessage(long msgno);
-	bool flagMessage(long msgno, std::string flag);
-	bool expunge(long msgno);
-	bool markAsSeen(long msgno);
-    std::string error();
-    std::string account();
+	bool GetEmailsPrior(std::string dirname, std::string& fromdate, std::string& uidlist);
+	bool GetMessageHeader(long uid);
+	bool GetMessageBody(long uid);
+	bool DeleteMessage(long msgno);
+	bool FlagMessage(long msgno, std::string flag);
+	bool Expunge(long msgno);
+	bool MarkAsSeen(long msgno);
+    std::string Error();
+    std::string Account();
 private:
-	std::string _Host;
-    std::string _Username;
-    std::string _Password;
-    uint16_t _Port;
+	std::string host;
+    std::string username;
+    std::string password;
+    uint16_t port;
 
-    char _SecurityType;
-	std::string _CurrentDirectory;
+	SecurityType securityType;
+	std::string currentDirectory;
 	std::string _Error;
 
-	ImapBearer* _BearerPtr;
+	ImapBearer* bearerPtr;
 };
 
 

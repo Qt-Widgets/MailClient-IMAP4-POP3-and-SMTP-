@@ -1,9 +1,11 @@
-#ifndef _ENCRYPTION_TYPE
-#define _ENCRYPTION_TYPE
+#ifndef _SECURITY_TYPE
+#define _SECURITY_TYPE
 
-#define SecurityAuto 'A'
-#define SecuritySsl 'S'
-#define SecurityTls 'T'
-#define SecurityNone 'N'
+typedef enum SecurityType
+{
+	None = 'N',
+	Ssl = 'S',
+	Tls = 'T'
+}SecurityType;
 
 #endif
