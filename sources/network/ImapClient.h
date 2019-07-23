@@ -3,11 +3,10 @@
 
 #include "Mail.h"
 #include "SecurityType.h"
+#include "TcpClient.h"
 #include <string>
 
 using namespace std;
-
-class ImapBearer;
 
 class ImapClient
 {
@@ -44,7 +43,7 @@ private:
 	std::string currentDirectory;
 	std::string _Error;
 
-	ImapBearer* bearerPtr;
+	TcpClient bearer;
 };
 
 

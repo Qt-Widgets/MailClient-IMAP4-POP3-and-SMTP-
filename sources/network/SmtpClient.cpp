@@ -2,16 +2,6 @@
 #include "../utils/StringEx.h"
 #include "../utils/Base64.h"
 #include "SmtpClient.h"
-#include "TcpClient.h"
-
-class SmtpBearer
-{
-public:
-    TcpClient cl;
-	SmtpBearer()
-	{
-	}
-};
 
 SmtpClient::SmtpClient()
 {
@@ -21,8 +11,6 @@ SmtpClient::SmtpClient()
 	port = 25;
 	securityType = None;
 	startTls = false;
-
-	bearerPtr = new SmtpBearer();
 }
 
 SmtpClient::SmtpClient(const std::string hoststr, uint16_t portstr, std::string usernamestr, std::string passwordstr, SecurityType sectype)
@@ -33,16 +21,11 @@ SmtpClient::SmtpClient(const std::string hoststr, uint16_t portstr, std::string 
 	port = portstr;
 	securityType = sectype;
 	startTls = false;
-
-	bearerPtr = new SmtpBearer();
 }
 
 SmtpClient::~SmtpClient()
 {
-    if (bearerPtr)
-    {
-        bearerPtr->cl.CloseSocket();
-    }
+	bearer.CloseSocket();
 }
 
 void SmtpClient::SetAccountInformation(const std::string hoststr, uint16_t portstr, std::string usernamestr, std::string passwordstr, SecurityType sectype)
@@ -73,12 +56,12 @@ bool SmtpClient::Connect()
 
     int retcode;
 
-    if (bearerPtr->cl.CreateSocket(host.c_str(), port, need_ssl))
+    if (bearer.CreateSocket(host.c_str(), port, need_ssl))
     {
-        if (bearerPtr->cl.ConnectSocket(retcode))
+        if (bearer.ConnectSocket(retcode))
         {
 			std::string resp;
-			bearerPtr->cl.ReceiveString(resp);
+			bearer.ReceiveString(resp);
             return true;
         }
     }
@@ -88,9 +71,9 @@ bool SmtpClient::Connect()
 
 bool SmtpClient::Disconnect()
 {
-	if (bearerPtr->cl.IsConnected())
+	if (bearer.IsConnected())
 	{
-		return bearerPtr->cl.CloseSocket();
+		return bearer.CloseSocket();
 	}
 
 	return false;
@@ -103,11 +86,11 @@ bool SmtpClient::SendHelo()
     sprintf(buff, "EHLO %s\r\n", publicIp.c_str());
 
     std::string helo = buff;
-    bearerPtr->cl.SendString(helo);
+    bearer.SendString(helo);
 
     while (true)
     {
-		if (!bearerPtr->cl.ReceiveString(resp))
+		if (!bearer.ReceiveString(resp))
 		{
 		    return false;
 		}
@@ -117,7 +100,7 @@ bool SmtpClient::SendHelo()
 			startTls = true;
 		}
 
-        if(bearerPtr->cl.PendingPreFetchedBufferSize() < 1)
+        if(bearer.PendingPreFetchedBufferSize() < 1)
         {
             return true;
         }
@@ -170,11 +153,11 @@ bool SmtpClient::SendMail(MailHeader &ehdr, MailBody &ebdy)
 	memset(buff, 0, 128);
 	sprintf(buff, "MAIL FROM: <%s>\r\n", username.c_str());
 
-	bearerPtr->cl.SendString(buff);
+	bearer.SendString(buff);
 
 	while (true)
 	{
-		if (!bearerPtr->cl.ReceiveString(resp))
+		if (!bearer.ReceiveString(resp))
 		{
 			return false;
 		}
@@ -184,7 +167,7 @@ bool SmtpClient::SendMail(MailHeader &ehdr, MailBody &ebdy)
 		{
 			memset(buff, 0, 128);
 			sprintf(buff, "RCPT TO: <%s>\r\n", all_rcpt[sent].c_str());
-			bearerPtr->cl.SendString(buff);
+			bearer.SendString(buff);
 			sent++;
 			continue;
 		}
@@ -196,13 +179,13 @@ bool SmtpClient::SendMail(MailHeader &ehdr, MailBody &ebdy)
 			{
 				memset(buff, 0, 128);
 				sprintf(buff, "DATA\r\n");
-				bearerPtr->cl.SendString(buff);
+				bearer.SendString(buff);
 			}
 			else
 			{
 				memset(buff, 0, 128);
 				sprintf(buff, "RCPT TO: <%s>\r\n", all_rcpt[sent].c_str());
-				bearerPtr->cl.SendString(buff);
+				bearer.SendString(buff);
 				sent++;
 			}
 			continue;
@@ -212,7 +195,7 @@ bool SmtpClient::SendMail(MailHeader &ehdr, MailBody &ebdy)
 		{
 			std::string data;
 			ehdr.serialize(data, &ebdy);
-			bearerPtr->cl.SendString(data);
+			bearer.SendString(data);
 			continue;
 		}
 
@@ -232,13 +215,13 @@ bool SmtpClient::StartTls()
 	char buff[128] = { 0 };
 	sprintf(buff, "STARTTLS\r\n");
 
-	bearerPtr->cl.SendString(buff);
+	bearer.SendString(buff);
 
 	bool handshake_ok = false;
 
 	while (true)
 	{
-		if (!bearerPtr->cl.ReceiveString(resp))
+		if (!bearer.ReceiveString(resp))
 		{
 			return false;
 		}
@@ -248,13 +231,13 @@ bool SmtpClient::StartTls()
 			handshake_ok = true;
 		}
 
-		if (bearerPtr->cl.PendingPreFetchedBufferSize() < 1)
+		if (bearer.PendingPreFetchedBufferSize() < 1)
 		{
 			break;
 		}
 	}
 
-	return bearerPtr->cl.SwitchToSecureMode();
+	return bearer.SwitchToSecureMode();
 }
 
 bool SmtpClient::NeedTls()
@@ -272,11 +255,11 @@ bool SmtpClient::Login()
 	sprintf(buff, "AUTH LOGIN\r\n");
 	int len = (int)strlen(buff);
 
-	bearerPtr->cl.SendString(buff);
+	bearer.SendString(buff);
 
 	while (true)
 	{
-		if (!bearerPtr->cl.ReceiveString(resp))
+		if (!bearer.ReceiveString(resp))
 		{
 			return false;
 		}
@@ -300,7 +283,7 @@ bool SmtpClient::Login()
 				std::string encoded_uname;
 				codec_b64.EncodeBase64((unsigned char*)username.c_str(), username.length(), olen, encoded_uname);
 				encoded_uname += "\r\n";
-				bearerPtr->cl.SendString(encoded_uname);
+				bearer.SendString(encoded_uname);
 				continue;
 			}
 
@@ -309,12 +292,12 @@ bool SmtpClient::Login()
 				std::string encoded_password;
 				codec_b64.EncodeBase64((unsigned char*)password.c_str(), password.length(), olen, encoded_password);
 				encoded_password += "\r\n";
-				bearerPtr->cl.SendString(encoded_password);
+				bearer.SendString(encoded_password);
 				continue;
 			}
 		}
 
-		if (bearerPtr->cl.PendingPreFetchedBufferSize() < 1)
+		if (bearer.PendingPreFetchedBufferSize() < 1)
 		{
 			tokens.clear();
 			strsplit(resp, tokens, ' ');
@@ -341,11 +324,11 @@ bool SmtpClient::Logout()
 	sprintf(buff, "QUIT\r\n");
 	int len = (int)strlen(buff);
 
-	bearerPtr->cl.SendString(buff);
+	bearer.SendString(buff);
 
 	while (true)
 	{
-		if (!bearerPtr->cl.ReceiveString(resp))
+		if (!bearer.ReceiveString(resp))
 		{
 			return false;
 		}

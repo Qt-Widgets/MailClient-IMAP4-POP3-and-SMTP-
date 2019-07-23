@@ -3,11 +3,10 @@
 
 #include "Mail.h"
 #include "SecurityType.h"
+#include "TcpClient.h"
 #include <string>
 
 using namespace std;
-
-class SmtpBearer;
 
 class SmtpClient
 {
@@ -40,7 +39,7 @@ private:
 	std::string error;
     MailHeader emailHdr;
     MailBody emailBdy;
-	SmtpBearer* bearerPtr;
+	TcpClient bearer;
 };
 
 #endif

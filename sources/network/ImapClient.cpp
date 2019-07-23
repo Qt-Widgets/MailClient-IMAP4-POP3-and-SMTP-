@@ -1,16 +1,6 @@
 #include <memory.h>
 #include "../utils/StringEx.h"
 #include "ImapClient.h"
-#include "TcpClient.h"
-
-class ImapBearer
-{
-public:
-	TcpClient cl;
-	ImapBearer()
-	{
-	}
-};
 
 unsigned long getNumber(const std::string& str);
 
@@ -24,8 +14,6 @@ ImapClient::ImapClient()
 
 	currentDirectory = "";
 	_Error = "";
-
-	bearerPtr = new ImapBearer();
 }
 
 ImapClient::ImapClient(const std::string &hoststr, uint16_t portstr, std::string usernamestr, std::string passwordstr, SecurityType sectype)
@@ -43,16 +31,11 @@ ImapClient::ImapClient(const std::string &hoststr, uint16_t portstr, std::string
 
 	currentDirectory = "";
 	_Error = "";
-
-	bearerPtr = new ImapBearer();
 }
 
 ImapClient::~ImapClient()
 {
-	if (bearerPtr)
-	{
-		bearerPtr->cl.CloseSocket();
-	}
+	bearer.CloseSocket();
 }
 
 void ImapClient::SetAccountInformation(const std::string &hoststr, uint16_t portstr, std::string usernamestr, std::string passwordstr, SecurityType sectype)
@@ -87,9 +70,9 @@ bool ImapClient::Connect()
 	
 	int retcode;
 
-	if (bearerPtr->cl.CreateSocket(host.c_str(), port, need_ssl))
+	if (bearer.CreateSocket(host.c_str(), port, need_ssl))
 	{
-		if (bearerPtr->cl.ConnectSocket(retcode))
+		if (bearer.ConnectSocket(retcode))
 		{
 			return true;
 		}
@@ -100,9 +83,9 @@ bool ImapClient::Connect()
 
 bool ImapClient::Disconnect()
 {
-	if (bearerPtr->cl.IsConnected())
+	if (bearer.IsConnected())
 	{
-		return bearerPtr->cl.CloseSocket();
+		return bearer.CloseSocket();
 	}
 
 	return false;
@@ -112,11 +95,11 @@ bool ImapClient::GetCapabilities()
 {
 	std::string resp;
 	std::string capability = "CY CAPABILITY\r\n";
-	bearerPtr->cl.SendString(capability);
+	bearer.SendString(capability);
 
 	while (true)
 	{
-		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
+		if (!bearer.ReceiveString(resp, "\r\n"))
 		{
 			return false;
 		}
@@ -138,11 +121,11 @@ bool ImapClient::Login()
 	login += username + " ";
 	login += password + "\r\n";
 
-	bearerPtr->cl.SendString(login);
+	bearer.SendString(login);
 
 	while (true)
 	{
-		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
+		if (!bearer.ReceiveString(resp, "\r\n"))
 		{
 			return false;
 		}
@@ -162,11 +145,11 @@ bool ImapClient::Logout()
 
 	std::string login = "LG LOGOUT\r\n ";
 
-	bearerPtr->cl.SendString(login);
+	bearer.SendString(login);
 
 	while (true)
 	{
-		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
+		if (!bearer.ReceiveString(resp, "\r\n"))
 		{
 			return false;
 		}
@@ -222,13 +205,13 @@ bool ImapClient::GetDirectoryList(std::vector<std::string>& dirList)
 	char command[128] = { 0 };
 	sprintf(command, "%s", temp.c_str());
 
-	bearerPtr->cl.SendString(command);
+	bearer.SendString(command);
 
 	bool result = false;
 
 	while (true)
 	{
-		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
+		if (!bearer.ReceiveString(resp, "\r\n"))
 		{
 			return false;
 		}
@@ -273,13 +256,13 @@ bool ImapClient::GetDirectory(std::string dirname, unsigned long& emailCount, un
 	char command[128] = { 0 };
 	sprintf(command, "IN SELECT \"%s\"\r\n", currentDirectory.c_str());
 
-	bearerPtr->cl.SendString(command);
+	bearer.SendString(command);
 
 	bool result = false;
 
 	while (true)
 	{
-		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
+		if (!bearer.ReceiveString(resp, "\r\n"))
 		{
 			result = false;
 			break;
@@ -320,13 +303,13 @@ bool ImapClient::getEmailsSince(std::string dirname, std::string& fromdate, std:
 	char command[128] = { 0 };
 	memset(command, 0, 128);
 	sprintf(command, "UID SEARCH SINCE \"%s\"\r\n", fromdate.c_str());
-	bearerPtr->cl.SendString(command);
+	bearer.SendString(command);
 
 	bool result = false;
 
 	while (true)
 	{
-		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
+		if (!bearer.ReceiveString(resp, "\r\n"))
 		{
 			result = false;
 			break;
@@ -354,13 +337,13 @@ bool ImapClient::GetEmailsPrior(std::string dirname, std::string& fromdate, std:
 	char command[128] = { 0 };
 	memset(command, 0, 128);
 	sprintf(command, "UID SEARCH BEFORE \"%s\"\r\n", fromdate.c_str());
-	bearerPtr->cl.SendString(command);
+	bearer.SendString(command);
 
 	bool result = false;
 
 	while (true)
 	{
-		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
+		if (!bearer.ReceiveString(resp, "\r\n"))
 		{
 			result = false;
 			break;
@@ -390,13 +373,13 @@ bool ImapClient::GetMessageHeader(long uid)
 
 	std::string resp;
 	std::vector<std::string> buffer;
-	bearerPtr->cl.SendString(command);
+	bearer.SendString(command);
 
 	bool result = false;
 
 	while (true)
 	{
-		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
+		if (!bearer.ReceiveString(resp, "\r\n"))
 		{
 			return false;
 		}
@@ -431,7 +414,7 @@ bool ImapClient::GetMessageBody(long uid)
 
 	std::string resp;
 	std::string buffer;
-	bearerPtr->cl.SendString(command);
+	bearer.SendString(command);
 
 	bool result = false;
 
@@ -439,7 +422,7 @@ bool ImapClient::GetMessageBody(long uid)
 
 	while (true)
 	{
-		if (!bearerPtr->cl.ReceiveString(resp, "\r\n"))
+		if (!bearer.ReceiveString(resp, "\r\n"))
 		{
 			return false;
 		}

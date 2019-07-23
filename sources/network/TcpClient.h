@@ -3,6 +3,7 @@
 
 #include <string>
 #include "Network.h"
+#include "../utils/StringEx.h"
 
 using namespace std;
 
@@ -13,11 +14,10 @@ class TcpClient
 public:
 	TcpClient();
 	TcpClient(int inSocket, bool requireSSL = false);
-	TcpClient(const TcpClient& other);
-	TcpClient& operator=(const TcpClient& other);
 
 	virtual ~TcpClient();
-	bool CreateSocket(const char* servername, int serverport, bool requireSSL = false);
+
+	bool CreateSocket(const char* servername, int serverport, bool reqSSL = false);
 	bool CreateSocket(unsigned long inSocket, bool requireSSL = false);
 	bool ConnectSocket(int &returncode);
 	bool CloseSocket();
@@ -26,8 +26,6 @@ public:
 	void SetPacketLength(long len);
 
 	bool SwitchToSecureMode();
-
-	std::string* CertificateName();
 
 	bool SendBuffer(const char* data, int &len);
 	bool SendString(const std::string &str);
@@ -40,7 +38,22 @@ public:
 
 	int PendingPreFetchedBufferSize();
 private:
-	SocketReference*    socketReferencePtr;
+	bool				connected;
+	unsigned long		socketFd;
+	sockaddr_in			serverAddress;
+	std::string 		serverName;
+	int					serverPort;
+	size_t				preFetchedBufferSize;
+	unsigned char*		preFetchedBuffer;
+	int					packetSize;
+	unsigned char*		packet;
+	char				packetDelimeter[32];
+	bool				requireSSL;
+	PacketBehaviour		phv;
+
+	const SSL_METHOD*	SSLMethod;
+	SSL_CTX*			SSLContext;
+	SSL*				SSLSession;
 };
 
 #endif
