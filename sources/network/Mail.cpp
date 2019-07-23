@@ -6,6 +6,8 @@
 #include "../utils/Directory.h"
 #include "../utils/Timestamp.h"
 
+void translateMonthToNumber(std::string& str);
+
 MailBody::MailBody()
 {
 	_MessageFormat = PlainText;
@@ -330,7 +332,7 @@ void MailBody::extractAttachment(int &ctr)
     }
 
     std::string name = _MimeData[(size_t)startline+1];
-    int pos = strsubstringpos(name.c_str(), "name=");
+    size_t pos = strsubstringpos(name.c_str(), "name=");
 	name = name.erase(0, pos + 6);
 
     if(value.NodeType == MimeType::Attachment)
@@ -552,7 +554,10 @@ void MailHeader::addtoToList(string receipient, bool overwrite)
         }
         else
         {
-            _ToList += ",";
+			if (_ToList.length() > 0)
+			{
+				_ToList += ",";
+			}
             _ToList += receipient;
             stralltrim(_ToList);
         }
@@ -574,7 +579,10 @@ void MailHeader::addtoCcList(string receipient, bool overwrite)
         }
         else
         {
-            _CcList += ",";
+			if (_CcList.length() > 0)
+			{
+				_CcList += ",";
+			}
             _CcList += receipient;
             stralltrim(_CcList);
         }
@@ -596,7 +604,10 @@ void MailHeader::addtoBccList(string receipient, bool overwrite)
         }
         else
         {
-            _BccList += ",";
+			if (_BccList.length() > 0)
+			{
+				_BccList += ",";
+			}
             _BccList += receipient;
             stralltrim(_BccList);
         }
@@ -620,7 +631,17 @@ void MailHeader::setMessageId(string msgid)
 
 void MailHeader::setTimeStamp(string dt)
 {
-    _TimeStamp = dt;
+	std::vector<std::string> tokens;
+	
+	strsplit(dt, tokens, ' ', true);
+
+	tokens.pop_back();
+	tokens.erase(tokens.begin());
+
+	translateMonthToNumber(tokens[1]);
+	strremove(tokens[3], ':');
+
+    _TimeStamp = tokens[2] + tokens[1] + tokens[0] + tokens[3];
 }
 
 void MailHeader::setDirection(string dir)
@@ -881,4 +902,81 @@ string MailHeader::decodeBase64(std::string str)
 }
 
 ///////////////////////////////////////////////////////////////////////////
+
+void translateMonthToNumber(std::string &str)
+{
+	strlower(str);
+
+	if (str == "jan")
+	{
+		str = "01";
+		return;
+	}
+
+	if (str == "feb")
+	{
+		str = "02";
+		return;
+	}
+
+	if (str == "mar")
+	{
+		str = "03";
+		return;
+	}
+
+	if (str == "apr")
+	{
+		str = "04";
+		return;
+	}
+
+	if (str == "may")
+	{
+		str = "05";
+		return;
+	}
+
+	if (str == "jun")
+	{
+		str = "06";
+		return;
+	}
+
+	if (str == "jul")
+	{
+		str = "07";
+		return;
+	}
+
+	if (str == "aug")
+	{
+		str = "08";
+		return;
+	}
+
+	if (str == "sep")
+	{
+		str = "09";
+		return;
+	}
+
+	if (str == "oct")
+	{
+		str = "10";
+		return;
+	}
+
+	if (str == "nov")
+	{
+		str = "11";
+		return;
+	}
+
+	if (str == "dec")
+	{
+		str = "12";
+		return;
+	}
+}
 

@@ -23,10 +23,10 @@ public:
 	bool Login();
 	bool Logout();
 	bool GetDirectory(std::string dirname, unsigned long &emailCount, unsigned long& uidNext);
-	bool getEmailsSince(std::string dirname, std::string &fromdate, std::string &uidlist);
+	bool GetEmailsSince(std::string dirname, std::string &fromdate, std::string &uidlist);
 	bool GetEmailsPrior(std::string dirname, std::string& fromdate, std::string& uidlist);
-	bool GetMessageHeader(long uid);
-	bool GetMessageBody(long uid);
+	bool GetMessageHeader(long uid, MailHeader &hdr);
+	bool GetMessageBody(long uid, MailBody &bdy);
 	bool DeleteMessage(long msgno);
 	bool FlagMessage(long msgno, std::string flag);
 	bool Expunge(long msgno);

@@ -87,19 +87,20 @@ void MailClient::TestIn()
 						std::string uidstr;
 						std::string fromdate = "17-JUL-2019";
 
-						unsigned long email_count, uid_next;
-
-						climap.GetDirectory("INBOX", email_count, uid_next);
-
 						std::vector<std::string> uidlist;
+
+						climap.GetEmailsPrior("INBOX", fromdate, uidstr);
 
 						strsplit(uidstr, uidlist, ' ', true);
 
 						for (std::string str : uidlist)
 						{
-							if (climap.GetMessageHeader(atoi(str.c_str())))
+							MailHeader hdr;
+							MailBody bdy;
+							if (climap.GetMessageHeader(atoi(str.c_str()), hdr))
 							{
-								climap.GetMessageBody(atoi(str.c_str()));
+								climap.GetMessageBody(atoi(str.c_str()), bdy);
+								bdy.setMessageId(hdr.messageId());
 							}
 						}
 					}

@@ -296,7 +296,7 @@ bool ImapClient::GetDirectory(std::string dirname, unsigned long& emailCount, un
 	return result;
 }
 
-bool ImapClient::getEmailsSince(std::string dirname, std::string& fromdate, std::string& uidlist)
+bool ImapClient::GetEmailsSince(std::string dirname, std::string& fromdate, std::string& uidlist)
 {
 	std::string resp;
 	std::vector<std::string> buffer;
@@ -365,7 +365,7 @@ bool ImapClient::GetEmailsPrior(std::string dirname, std::string& fromdate, std:
 }
 
 
-bool ImapClient::GetMessageHeader(long uid)
+bool ImapClient::GetMessageHeader(long uid, MailHeader& hdr)
 {
 	char command[128] = { 0 };
 	memset(command, 0, 128);
@@ -399,14 +399,65 @@ bool ImapClient::GetMessageHeader(long uid)
 		buffer.push_back(resp);
 	}
 
-	buffer.pop_back();
-	buffer.pop_back();
-	buffer.erase(buffer.begin());
+	if (result)
+	{
+		buffer.pop_back();
+		buffer.pop_back();
+		buffer.erase(buffer.begin());
+
+		for (auto str : buffer)
+		{
+			std::string field_name, field_value;
+			strsplit(str, ':', field_name, field_value, true);
+
+			if (strcontains(field_name.c_str(), "Message-ID") || strcontains(field_name.c_str(), "Message-Id"))
+			{
+				stralltrim(field_value);
+				hdr.setMessageId(field_value);
+			}
+
+			if (strcontains(field_name.c_str(), "Subject"))
+			{
+				stralltrim(field_value);
+				hdr.setSubject(field_value);
+			}
+
+			if (strcontains(field_name.c_str(), "Date"))
+			{
+				stralltrim(field_value);
+				hdr.setTimeStamp(field_value);
+			}
+
+			if (strcontains(field_name.c_str(), "From"))
+			{
+				stralltrim(field_value);
+				hdr.setFrom(field_value);
+			}
+
+			if (strcontains(field_name.c_str(), "To"))
+			{
+				stralltrim(field_value);
+				hdr.addtoToList(field_value);
+			}
+
+			if (strcontains(field_name.c_str(), "CC"))
+			{
+				stralltrim(field_value);
+				hdr.addtoCcList(field_value);
+			}
+
+			if (strcontains(field_name.c_str(), "BCC"))
+			{
+				stralltrim(field_value);
+				hdr.addtoBccList(field_value);
+			}
+		}
+	}
 
 	return result;
 }
 
-bool ImapClient::GetMessageBody(long uid)
+bool ImapClient::GetMessageBody(long uid, MailBody& bdy)
 {
 	char command[128] = { 0 };
 	memset(command, 0, 128);
@@ -445,7 +496,12 @@ bool ImapClient::GetMessageBody(long uid)
 			continue;
 		}
 
-		buffer += resp;
+		buffer += resp + "\r\n";
+	}
+
+	if (result)
+	{
+		bdy.setMessage(buffer);
 	}
 
 	return result;
