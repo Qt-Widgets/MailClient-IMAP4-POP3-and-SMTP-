@@ -1,9 +1,17 @@
 #ifndef _LOGGER
 #define _LOGGER
 
+#if defined(_WIN32) || defined(WIN32)
+#include <Windows.h>
+#include <process.h>
+#define getpid()	_getpid()
+#define pid_t    long
+#else
+#include <unistd.h> 
+#endif
 #include "StringEx.h"
 #include "Directory.h"
-#include "Timestamp.h"
+#include "DateTime.h"
 #include <map>
 #include <string>
 

@@ -1,6 +1,6 @@
 #include <memory.h>
-#include "../utils/StringEx.h"
-#include "../utils/Base64.h"
+#include "../../utils/StringEx.h"
+#include "../../utils/Base64.h"
 #include "SmtpClient.h"
 
 SmtpClient::SmtpClient()
@@ -121,24 +121,24 @@ std::string SmtpClient::Account()
 
 std::string SmtpClient::Error()
 {
-	return error;
+	return errorStr;
 }
 
-bool SmtpClient::SendMail(MailHeader &ehdr, MailBody &ebdy)
+bool SmtpClient::SendMail(Mail& mail)
 {
 	std::vector<std::string> all_rcpt;
 
-	for (auto s : ehdr.toList())
+	for (auto s : mail.Header.GetToList())
 	{
 		all_rcpt.push_back(s);
 	}
 
-	for (auto s : ehdr.ccList())
+	for (auto s : mail.Header.GetCcList())
 	{
 		all_rcpt.push_back(s);
 	}
 
-	for (auto s : ehdr.bccList())
+	for (auto s : mail.Header.GetBccList())
 	{
 		all_rcpt.push_back(s);
 	}
@@ -193,9 +193,13 @@ bool SmtpClient::SendMail(MailHeader &ehdr, MailBody &ebdy)
 
 		if (strcontains(resp.c_str(), "354"))
 		{
-			std::string data;
-			ehdr.serialize(data, &ebdy);
-			bearer.SendString(data);
+			if (mail.SerializedData.length() < 1)
+			{
+				mail.Serialize();
+			}
+
+			bearer.SendString(mail.SerializedData);
+			bearer.SendString("\r\n.\r\n");
 			continue;
 		}
 

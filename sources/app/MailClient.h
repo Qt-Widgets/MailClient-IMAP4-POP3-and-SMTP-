@@ -1,12 +1,17 @@
-#ifndef MAIL_CLIENT
-#define MAIL_CLIENT
+#ifndef _RUSH_PRIORITY
+#define _RUSH_PRIORITY
 
-#include "./network/ImapClient.h"
-#include "./network/SmtpClient.h"
-#include "./network/Mail.h"
-#include "./utils/Logger.h"
-#include "./utils/Directory.h"
-#include "./utils/StringEx.h"
+#include "../../network/ImapClient.h"
+#include "../../network/SmtpClient.h"
+#include "../../data/Mail.h"
+#include "../../data/MailStorage.h"
+#include "../../utils/Logger.h"
+#include "../../utils/Directory.h"
+#include "../../utils/StringEx.h"
+#include "../../utils/CommQueue.h"
+#include "../../utils/Configuration.h"
+#include "../../data/MailDatabase.h"
+#include "../../data/ContactDatabase.h"
 
 typedef struct MailTransport
 {
@@ -14,15 +19,15 @@ typedef struct MailTransport
 	ImapClient imap;
 }MailTransport;
 
-class MailClient
+class RushPriority
 {
 public:
-    explicit MailClient(int argc, char *argv[]);
-    virtual ~MailClient();
-    void Start();
+    explicit RushPriority(int argc, char *argv[]);
+    virtual ~RushPriority();
 	bool Initialize();
-	void TestIn();
-	void TestOut();
+	void StartPollerLoop();
+    void StartMessageLoop();
+	MailDatabase* MailDb();
 
 private:
 	void GetProfileList();
@@ -30,17 +35,39 @@ private:
 	void AddProfile(std::string &str);
 	void UpdateProfile(std::string& str);
 	void RemoveProfile(std::string& str);
-	void SendEmail(std::string& str);
+
+	void SendEmail(std::vector<std::string>& strlist);
+
 	void GetAccountDirectories(std::string& str);
-	void GetDirectoryInformation(std::string& str);
-	void GetEmailHeader(std::string& str);
-	void GetEmailBody(std::string& str);
-	void RemoveEmail(std::string& str);
-	void FlagEmail(std::string& str);
-	void MarkEmail(std::string& str);
-	void PurgeDeleted(std::string& str);
+	void GetEmails(std::string& str1, std::string& str2);
+	void GetEmailsByTerm(std::string& str1, std::string& str2, std::string& str3);
+	void GetEmailHeader(std::string& profilename, std::string& directory, std::string& uid);
+	void GetEmailBody(std::string& profilename, std::string& directory, std::string& uid);
+	void RemoveEmail(std::string& profilename, std::string& directory, std::string& uid, std::string &messageid);
+	void FlagEmail(std::string& profilename, std::string& directory, std::string& uid, std::string& flag);
+	void MarkEmail(std::string& profilename, std::string& directory, std::string& uid);
+	void PurgeDeleted(std::string& profilename, std::string& directory);
+
+	void GetContactList();
+	void GetContactDetails(std::string& contactId);
+	void CreateContact(std::string& userinfo);
+	void UpdateContact(std::string& userinfo);
+	void RemoveContact(std::string& contactId);
+
+	void LoadConfiguration();
+	void SaveConfiguration(std::string &str);
+	void GetConfiguration();
+
+	void LoadProfiles();
+
+	CommQueue cmdStream;
+	std::string appName, publicIpAddress;
+	MailDatabase mailDb;
+	ContactDatabase contactDb;
+	Configuration appConfig;
+	std::map<std::string, Profile> profileList;
 };
 
-extern MailClient* mailClientPtr;
+extern RushPriority* mailClientPtr;
 
 #endif

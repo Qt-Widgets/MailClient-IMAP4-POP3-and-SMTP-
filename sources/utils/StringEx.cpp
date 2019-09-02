@@ -11,8 +11,8 @@ int strsubstringpos(const char* str,const char* substr)
     {
         return -1;
     }
-    int result = pdest - str;
-    return result;
+    ptrdiff_t result = pdest - str;
+    return (int) result;
 }
 
 int	strcharacterpos(const char* str, const char ch)
@@ -53,7 +53,7 @@ void strsplit(const string &str, vector<string> &tokens, const string &delimiter
     string::size_type lastPos = str.find_first_not_of(delimiters, 0);
 
     // Find first non-delimiter
-    string::size_type pos = str.find_first_of(delimiters, lastPos);
+    string::size_type pos = str.find(delimiters, lastPos);
 
     while (string::npos != pos || string::npos != lastPos)
     {
@@ -70,7 +70,7 @@ void strsplit(const string &str, vector<string> &tokens, const string &delimiter
         // Skip delimiters
         lastPos = str.find_first_not_of(delimiters, pos);
         // Find next non-delimiter
-        pos = str.find_first_of(delimiters, lastPos);
+        pos = str.find(delimiters, lastPos);
     }
 }
 
@@ -96,7 +96,7 @@ void strsplit(const string &str, list<string> &tokens, const string &delimiters,
     string::size_type lastPos = str.find_first_not_of(delimiters, 0);
 
     // Find first non-delimiter
-    string::size_type pos = str.find_first_of(delimiters, lastPos);
+    string::size_type pos = str.find(delimiters, lastPos);
 
     while (string::npos != pos || string::npos != lastPos)
     {
@@ -113,7 +113,7 @@ void strsplit(const string &str, list<string> &tokens, const string &delimiters,
         // Skip delimiters
         lastPos = str.find_first_not_of(delimiters, pos);
         // Find next non-delimiter
-        pos = str.find_first_of(delimiters, lastPos);
+        pos = str.find(delimiters, lastPos);
     }
 }
 
@@ -168,14 +168,14 @@ void strsplit(const string &str, char delim, string &keystr, string &valuestr, b
 
 int strsplit(const string &str, const string &delim, string &keystr, string &valuestr, bool trim)
 {
-    int pos = str.find(delim);
+    int pos = (int) str.find(delim);
 
     if(pos == -1)
     {
         return pos;
     }
 
-    char *tptr = new char[(size_t)pos+1];
+    char *tptr = new char[(size_t)pos+1];//bug
     memset(tptr,0, (size_t)pos+1);
 
     memcpy(tptr, str.c_str(), pos);
@@ -195,8 +195,8 @@ int strsplit(const string &str, const string &delim, string &keystr, string &val
 
 void strreplace(string &srcstr, const char oldchar, const char newchar)
 {
-    int len = srcstr.length();
-    for(int ctr = 0 ; ctr < len ; ctr++)
+    size_t len = srcstr.length();
+    for(size_t ctr = 0 ; ctr < len ; ctr++)
     {
         if(srcstr[ctr] == oldchar)
         {
@@ -238,11 +238,15 @@ void strreplace(string &srcstr, const string oldpattern, const char newchar)
 
 void stralltrim(std::string &str)
 {
-    char* buffer = new char[str.length() +1];
-    memset(buffer, 0, str.length());
+	size_t buff_len = str.length();
+
+	buff_len++;
+
+    char* buffer = new char[buff_len];//bug
+    memset(buffer, 0, buff_len);
     strcpy(buffer, str.c_str());
 
-    int len = strlen(buffer);
+    size_t len = strlen(buffer);
 
 	if (len < 1)
 	{
@@ -250,7 +254,7 @@ void stralltrim(std::string &str)
 		return;
 	}
 
-    for(int i = len-1;  ; i--)
+    for(long i = len-1;  i > -1 ; i--)
     {
 		if (i < 0)
 		{
@@ -300,8 +304,8 @@ int strcharcount(const char *str, char ch)
 
 void strlower(string &srcstr)
 {
-    int len = srcstr.length();
-    for(int ctr = 0 ; ctr < len ; ctr++)
+    size_t len = srcstr.length();
+    for(size_t ctr = 0 ; ctr < len ; ctr++)
     {
         srcstr[ctr] = tolower(srcstr[ctr]);
     }
@@ -309,8 +313,8 @@ void strlower(string &srcstr)
 
 void strupper(string &srcstr)
 {
-    int len = srcstr.length();
-    for(int ctr = 0 ; ctr < len ; ctr++)
+    size_t len = srcstr.length();
+    for(size_t ctr = 0 ; ctr < len ; ctr++)
     {
         srcstr[ctr] = toupper(srcstr[ctr]);
     }
@@ -318,14 +322,17 @@ void strupper(string &srcstr)
 
 void strremove(string &srcstr, const char oldchar)
 {
-    size_t len = srcstr.length();
-    char* buffer = new char[len];
-    memset(buffer, 0, len);
+	size_t buff_len = srcstr.length();
+
+	buff_len++;
+
+    char* buffer = new char[buff_len];//bug
+    memset(buffer, 0, buff_len);
 
     int strctr = 0;
     int bufctr = 0;
 
-    for( ; strctr < len; strctr++)
+    for( ; strctr < buff_len -1 ; strctr++)
     {
         if(srcstr[strctr] != oldchar)
         {

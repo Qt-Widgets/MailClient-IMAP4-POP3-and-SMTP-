@@ -1,8 +1,8 @@
 #ifndef _SMTP_CLIENT
 #define _SMTP_CLIENT
 
-#include "Mail.h"
-#include "SecurityType.h"
+#include "../data/Mail.h"
+#include "../data/SecurityType.h"
 #include "TcpClient.h"
 #include <string>
 
@@ -23,7 +23,7 @@ public:
 	bool NeedTls();
 	bool Login();
 	bool Logout();
-	bool SendMail(MailHeader &ehdr, MailBody &ebdy);
+	bool SendMail(Mail& mail);
     std::string Account();
 	std::string Error();
 
@@ -36,7 +36,7 @@ private:
 	bool startTls;
 	std::string publicIp;
 	
-	std::string error;
+	std::string errorStr;
     MailHeader emailHdr;
     MailBody emailBdy;
 	TcpClient bearer;

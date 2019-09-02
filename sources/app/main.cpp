@@ -1,19 +1,16 @@
-#include "MailClient.h"
-#include "./utils/Directory.h"
-#include "./utils/StringEx.h"
+#include "RushPriority.h"
 
 int main(int argc, char *argv[])
 {
-    MailClient* app = new MailClient(argc, argv);
+	RushPriority app(argc, argv);
 
-	if (!app->Initialize())
+	if (!app.Initialize())
 	{
 		return -1;
 	}
 
-    //app->Start();
-	app->TestIn();
-	//app->TestOut();
+	app.StartPollerLoop();
+    app.StartMessageLoop();
 
     return 0;
 }

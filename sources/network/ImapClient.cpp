@@ -1,5 +1,5 @@
 #include <memory.h>
-#include "../utils/StringEx.h"
+#include "../../utils/StringEx.h"
 #include "ImapClient.h"
 
 unsigned long getNumber(const std::string& str);
@@ -13,7 +13,7 @@ ImapClient::ImapClient()
 	securityType = None;
 
 	currentDirectory = "";
-	_Error = "";
+	errorStr = "";
 }
 
 ImapClient::ImapClient(const std::string &hoststr, uint16_t portstr, std::string usernamestr, std::string passwordstr, SecurityType sectype)
@@ -30,7 +30,7 @@ ImapClient::ImapClient(const std::string &hoststr, uint16_t portstr, std::string
     securityType = sectype;
 
 	currentDirectory = "";
-	_Error = "";
+	errorStr = "";
 }
 
 ImapClient::~ImapClient()
@@ -165,7 +165,7 @@ bool ImapClient::Logout()
 
 std::string ImapClient::Error()
 {
-    return _Error;
+    return errorStr;
 }
 
 std::string ImapClient::Account()
@@ -173,28 +173,110 @@ std::string ImapClient::Account()
     return username;
 }
 
-bool ImapClient::Expunge(long msgno)
+bool ImapClient::Expunge(std::string& dir)
 {
-	std::string imapData;
+	std::string resp;
+	std::string capability = "EX EXPUNGE\r\n";
+	bearer.SendString(capability);
+
+	while (true)
+	{
+		if (!bearer.ReceiveString(resp, "\r\n"))
+		{
+			return false;
+		}
+
+		if (strcontains(resp.c_str(), "EX OK"))
+		{
+			return true;
+		}
+	}
+
 	return false;
 }
 
-bool ImapClient::MarkAsSeen(long msgno)
+bool ImapClient::MarkAsSeen(std::string& uid)
 {
-	std::string imapData;
-	return false;
+	std::string resp;
+	char command[128] = { 0 };
+	memset(command, 0, 128);
+	sprintf(command, "UID STORE %s +FLAGS \\Seen\r\n", uid.c_str());
+	bearer.SendString(command);
+
+	bool result = false;
+
+	while (true)
+	{
+		if (!bearer.ReceiveString(resp, "\r\n"))
+		{
+			result = false;
+			break;
+		}
+
+		if (strcontains(resp.c_str(), "OK STORE") || strcontains(resp.c_str(), "OK Store"))
+		{
+			result = true;
+			break;
+		}
+	}
+
+	return result;
 }
 
-bool ImapClient::DeleteMessage(long msgno)
+bool ImapClient::DeleteMessage(std::string& uid)
 {
-	std::string imapData;
-	return false;
+	std::string resp;
+	char command[128] = { 0 };
+	memset(command, 0, 128);
+	sprintf(command, "UID STORE %s +FLAGS \\Deleted\r\n", uid.c_str());
+	bearer.SendString(command);
+
+	bool result = false;
+
+	while (true)
+	{
+		if (!bearer.ReceiveString(resp, "\r\n"))
+		{
+			result = false;
+			break;
+		}
+
+		if (strcontains(resp.c_str(), "OK STORE") || strcontains(resp.c_str(), "OK Store"))
+		{
+			result = true;
+			break;
+		}
+	}
+
+	return result;
 }
 
-bool ImapClient::FlagMessage(long msgno, std::string flag)
+bool ImapClient::FlagMessage(std::string& uid, std::string flag)
 {
-	std::string imapData;
-	return false;
+	std::string resp;
+	char command[128] = { 0 };
+	memset(command, 0, 128);
+	sprintf(command, "UID STORE %s +FLAGS \\%s\r\n", uid.c_str(), flag.c_str());
+	bearer.SendString(command);
+
+	bool result = false;
+
+	while (true)
+	{
+		if (!bearer.ReceiveString(resp, "\r\n"))
+		{
+			result = false;
+			break;
+		}
+
+		if (strcontains(resp.c_str(), "OK STORE") || strcontains(resp.c_str(), "OK Store"))
+		{
+			result = true;
+			break;
+		}
+	}
+
+	return result;
 }
 
 bool ImapClient::GetDirectoryList(std::vector<std::string>& dirList)
@@ -247,6 +329,45 @@ bool ImapClient::GetDirectoryList(std::vector<std::string>& dirList)
 	return result;
 }
 
+bool ImapClient::SelectDirectory(std::string dirname)
+{
+	currentDirectory = dirname;
+
+	std::string resp;
+	std::vector<std::string> buffer;
+	char command[128] = { 0 };
+	sprintf(command, "IN SELECT \"%s\"\r\n", currentDirectory.c_str());
+
+	bearer.SendString(command);
+
+	bool result = false;
+
+	while (true)
+	{
+		if (!bearer.ReceiveString(resp, "\r\n"))
+		{
+			result = false;
+			break;
+		}
+
+		if (strcontains(resp.c_str(), "IN OK"))
+		{
+			result = true;
+			break;
+		}
+
+		if (strcontains(resp.c_str(), "IN BAD"))
+		{
+			result = false;
+			break;
+		}
+
+		buffer.push_back(resp);
+	}
+
+	return result;
+}
+
 bool ImapClient::GetDirectory(std::string dirname, unsigned long& emailCount, unsigned long &uidNext)
 {
 	currentDirectory = dirname;
@@ -273,6 +394,12 @@ bool ImapClient::GetDirectory(std::string dirname, unsigned long& emailCount, un
 			result = true;
 			break;
 		}		
+
+		if (strcontains(resp.c_str(), "IN BAD"))
+		{
+			result = false;
+			break;
+		}
 		
 		buffer.push_back(resp);
 	}
@@ -291,6 +418,47 @@ bool ImapClient::GetDirectory(std::string dirname, unsigned long& emailCount, un
 				uidNext = getNumber(str);
 			}
 		}
+	}
+
+	return result;
+}
+
+bool ImapClient::GetEmailsAll(std::string dirname, std::string& uidlist)
+{
+	std::string fromdate = "01-JAN-1980";
+	std::string resp;
+	std::vector<std::string> buffer;
+	char command[128] = { 0 };
+	memset(command, 0, 128);
+	sprintf(command, "UID SEARCH SINCE \"%s\"\r\n", fromdate.c_str());
+	bearer.SendString(command);
+
+	bool result = false;
+
+	while (true)
+	{
+		if (!bearer.ReceiveString(resp, "\r\n"))
+		{
+			result = false;
+			break;
+		}
+
+		if (strcontains(resp.c_str(), "UID OK"))
+		{
+			result = true;
+			break;
+		}
+
+		if (strcontains(resp.c_str(), "UID NO") || strcontains(resp.c_str(), "UID BAD"))
+		{
+			result = false;
+			break;
+		}
+
+		uidlist = resp;
+		strreplace(uidlist, "SEARCH", "*");
+		strremove(uidlist, '*');
+		stralltrim(uidlist);
 	}
 
 	return result;
@@ -318,6 +486,12 @@ bool ImapClient::GetEmailsSince(std::string dirname, std::string& fromdate, std:
 		if (strcontains(resp.c_str(), "UID OK"))
 		{
 			result = true;
+			break;
+		}
+
+		if (strcontains(resp.c_str(), "UID NO") || strcontains(resp.c_str(), "UID BAD"))
+		{
+			result = false;
 			break;
 		}
 
@@ -355,6 +529,12 @@ bool ImapClient::GetEmailsPrior(std::string dirname, std::string& fromdate, std:
 			break;
 		}
 
+		if (strcontains(resp.c_str(), "UID NO") || strcontains(resp.c_str(), "UID BAD"))
+		{
+			result = false;
+			break;
+		}
+
 		uidlist = resp;
 		strreplace(uidlist, "SEARCH", "*");
 		strremove(uidlist, '*');
@@ -364,12 +544,51 @@ bool ImapClient::GetEmailsPrior(std::string dirname, std::string& fromdate, std:
 	return result;
 }
 
+bool ImapClient::GetEmailsRecent(std::string dirname, std::string& uidlist)
+{
+	std::string resp;
+	std::vector<std::string> buffer;
+	char command[128] = { 0 };
+	memset(command, 0, 128);
+	sprintf(command, "UID SEARCH RECENT\r\n");
+	bearer.SendString(command);
 
-bool ImapClient::GetMessageHeader(long uid, MailHeader& hdr)
+	bool result = false;
+
+	while (true)
+	{
+		if (!bearer.ReceiveString(resp, "\r\n"))
+		{
+			result = false;
+			break;
+		}
+
+		if (strcontains(resp.c_str(), "UID OK"))
+		{
+			result = true;
+			break;
+		}
+
+		if (strcontains(resp.c_str(), "UID NO") || strcontains(resp.c_str(), "UID BAD"))
+		{
+			result = false;
+			break;
+		}
+
+		uidlist = resp;
+		strreplace(uidlist, "SEARCH", "*");
+		strremove(uidlist, '*');
+		stralltrim(uidlist);
+	}
+
+	return result;
+}
+
+bool ImapClient::GetMessageHeader(std::string& uid, Mail& mail)
 {
 	char command[128] = { 0 };
 	memset(command, 0, 128);
-	sprintf(command, "UID FETCH %d (BODY[HEADER.FIELDS (DATE FROM SUBJECT TO CC BCC MESSAGE-ID)])\r\n", uid);
+	sprintf(command, "UID FETCH %s (BODY[HEADER.FIELDS (DATE FROM SUBJECT TO CC BCC MESSAGE-ID)])\r\n", uid.c_str());
 
 	std::string resp;
 	std::vector<std::string> buffer;
@@ -413,43 +632,44 @@ bool ImapClient::GetMessageHeader(long uid, MailHeader& hdr)
 			if (strcontains(field_name.c_str(), "Message-ID") || strcontains(field_name.c_str(), "Message-Id"))
 			{
 				stralltrim(field_value);
-				hdr.setMessageId(field_value);
+				mail.Header.SetMessageId(field_value);
 			}
 
 			if (strcontains(field_name.c_str(), "Subject"))
 			{
 				stralltrim(field_value);
-				hdr.setSubject(field_value);
+				strreplace(field_value, '|', ',');
+				mail.Header.SetSubject(field_value);
 			}
 
 			if (strcontains(field_name.c_str(), "Date"))
 			{
 				stralltrim(field_value);
-				hdr.setTimeStamp(field_value);
+				mail.Header.SetTimeStamp(field_value);
 			}
 
 			if (strcontains(field_name.c_str(), "From"))
 			{
 				stralltrim(field_value);
-				hdr.setFrom(field_value);
+				mail.Header.SetFrom(field_value);
 			}
 
 			if (strcontains(field_name.c_str(), "To"))
 			{
 				stralltrim(field_value);
-				hdr.addtoToList(field_value);
+				mail.Header.AddtoToList(field_value);
 			}
 
 			if (strcontains(field_name.c_str(), "CC"))
 			{
 				stralltrim(field_value);
-				hdr.addtoCcList(field_value);
+				mail.Header.AddtoCcList(field_value);
 			}
 
 			if (strcontains(field_name.c_str(), "BCC"))
 			{
 				stralltrim(field_value);
-				hdr.addtoBccList(field_value);
+				mail.Header.AddtoBccList(field_value);
 			}
 		}
 	}
@@ -457,11 +677,11 @@ bool ImapClient::GetMessageHeader(long uid, MailHeader& hdr)
 	return result;
 }
 
-bool ImapClient::GetMessageBody(long uid, MailBody& bdy)
+bool ImapClient::GetMessageBody(std::string& uid, Mail& mail)
 {
 	char command[128] = { 0 };
 	memset(command, 0, 128);
-	sprintf(command, "UID FETCH %d (BODY[TEXT])\r\n", uid);
+	sprintf(command, "UID FETCH %s (BODY[TEXT])\r\n", uid.c_str());
 
 	std::string resp;
 	std::string buffer;
@@ -482,14 +702,14 @@ bool ImapClient::GetMessageBody(long uid, MailBody& bdy)
 		{
 			result = true;
 			break;
-		}	
+		}
 
 		if (strcontains(resp.c_str(), "UID NO") || strcontains(resp.c_str(), "UID BAD"))
 		{
 			result = false;
 			break;
 		}
-		
+
 		if (linectr == 0)
 		{
 			linectr++;
@@ -501,15 +721,14 @@ bool ImapClient::GetMessageBody(long uid, MailBody& bdy)
 
 	if (result)
 	{
-		bdy.setMessage(buffer);
+		mail.Serialize();
+		mail.SerializedData += buffer;
 	}
 
 	return result;
 }
 
-
 ///////////////////////////////////////////////////////////////////////////
-
 
 unsigned long getNumber(const std::string& str)
 {

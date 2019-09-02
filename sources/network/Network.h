@@ -100,7 +100,7 @@ typedef enum PacketBehaviour
 class Descriptor
 {
 public:
-	virtual DescriptorType DescriptorType() = 0;
+	virtual DescriptorType FDType() = 0;
 };
 
 

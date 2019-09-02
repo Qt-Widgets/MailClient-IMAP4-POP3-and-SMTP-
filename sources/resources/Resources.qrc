@@ -1,0 +1,34 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/qtlogo.png</file>
+        <file>images/mailclient.png</file>
+        <file>images/profiles.png</file>
+        <file>images/emailreplyall.png</file>
+        <file>images/emailforward.png</file>
+        <file>images/emailreply.png</file>
+        <file>images/emailcompose.png</file>
+        <file>images/emailattachment.png</file>
+        <file>images/emailnext.png</file>
+        <file>images/emailprevious.png</file>
+        <file>images/exit.png</file>
+        <file>images/emailsearch.png</file>
+        <file>images/settings.png</file>
+        <file>images/contact.png</file>
+        <file>images/addressbook.png</file>
+        <file>images/emaildelete.png</file>
+        <file>images/emailflag.png</file>
+        <file>images/splashscreen.png</file>
+        <file>images/contactadd.png</file>
+        <file>images/contactdelete.png</file>
+        <file>images/contactedit.png</file>
+        <file>images/add.png</file>
+        <file>images/remove.png</file>
+        <file>images/save.png</file>
+        <file>images/barprogress.gif</file>
+        <file>images/cirularprogress.gif</file>
+        <file>images/refresh.png</file>
+        <file>images/emailfilter.png</file>
+        <file>images/emailraw.png</file>
+        <file>images/expunge.png</file>
+    </qresource>
+</RCC>

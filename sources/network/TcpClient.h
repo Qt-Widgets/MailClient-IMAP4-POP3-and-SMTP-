@@ -3,7 +3,7 @@
 
 #include <string>
 #include "Network.h"
-#include "../utils/StringEx.h"
+#include "../../utils/StringEx.h"
 
 using namespace std;
 

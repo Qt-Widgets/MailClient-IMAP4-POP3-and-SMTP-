@@ -3,14 +3,6 @@
 #include <memory.h>
 #include <string.h>
 
-#if defined(_WIN32) || defined(WIN32)
-#include <process.h>
-#define getpid()	_getpid()
-#define pid_t    long
-#else
-#include <unistd.h> 
-#endif
-
 Logger objLogger;
 
 Logger*  Logger::GetInstance()
@@ -55,7 +47,7 @@ void Logger::StopLogging()
 
 void Logger::CreateBackupFileName(std::string &str)
 {
-    Timestamp ts;
+	DateTime ts;
 	std::string tstamp = ts.getDateString("yyyy.MM.dd-hh.mm.ss");
     char temp[1024];
     memset((char*)&temp[0],0,16);
@@ -104,7 +96,7 @@ void Logger::Write(std::string logEntry, LogLevel llevel, const char* func, cons
 		dirgetname(file, sourcefile);
 		std::string lvel = logLevelMap[llevel];
 
-        Timestamp ts;
+		DateTime ts;
 		std::string tstamp = ts.getDateString("yyyy.MM.dd-hh.mm.ss");
         char temp[1024];
         memset((char*)&temp[0],0,16);
@@ -141,7 +133,7 @@ void Logger::Write(std::string logEntry, LogLevel llevel, const char* func, cons
 
 void Logger::SetModuleName(const char *mname)
 {
-    int len = strlen(mname);
+    int len = (int) strlen(mname);
 
     int ctr = 0;
 

@@ -1,22 +1,5 @@
 #include "Directory.h"
 
-#if defined(_WIN32)  || defined(WIN32)
-#define getcwd(ptr,n) _getcwd(ptr,n)
-#define chdir(str) _chdir(str)
-#if defined(_MSC_VER)
-#define DIRECTORY_SEPARATOR '\\'
-#else
-#define DIRECTORY_SEPARATOR '/'
-#endif
-#include <Windows.h>
-#include <direct.h>
-#else
-#define DIRECTORY_SEPARATOR '/'
-#include <dirent.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#endif
-
 #include <stdlib.h>
 #include <memory.h>
 
@@ -41,11 +24,11 @@ void dirgetparentdirectory(const std::string& str, std::string& pstr)
 {
 	size_t origlen = str.length();
 
-	char* ptr = new char[origlen + 1];
+	char* ptr = new char[origlen + 1];//bug
 	memset(ptr, 0, origlen + 1);
 	memcpy(ptr, str.c_str(), origlen);
 
-	int len = strlen(ptr);
+	int len = (int) strlen(ptr);
 
 	if (len < 2)
 		return;
@@ -71,7 +54,7 @@ void dirgetextension(const std::string& str, std::string& ext)
 {
 	int i = 0;
 	ext = "";
-	int len = str.length();
+	int len = (int) str.length();
 
 	if (len < 1)
 		return;
@@ -106,7 +89,7 @@ void dirgetname(const std::string& fullpath, std::string& str)
 {
 	int i = 0;
 	str = "";
-	int len = fullpath.length();
+	int len = (int) fullpath.length();
 
 	if (len < 1)
 		return;
@@ -191,7 +174,7 @@ void dirgetdirectorylist(const std::string& dirname, std::vector<DirEntry>& dlis
 				finfo.Name = dstruct.cFileName;
 				finfo.FullPath = fullpath + finfo.Name;
 
-				time_t createtm;
+//				time_t createtm;
 				ull = 0;
 				ull = reinterpret_cast<const ULONGLONG&>(dstruct.ftCreationTime);
 				ull -= 116444736000000000;
@@ -202,7 +185,7 @@ void dirgetdirectorylist(const std::string& dirname, std::vector<DirEntry>& dlis
 				}
 				finfo.CreationTime = static_cast<time_t>(ull);
 
-				time_t modifytm;
+//				time_t modifytm;
 				ull = 0;
 				ull = reinterpret_cast<const ULONGLONG&>(dstruct.ftLastWriteTime);
 				ull -= 116444736000000000;
@@ -280,7 +263,7 @@ void dirgetfilelist(const std::string& dirname, std::vector<DirEntry>& dlist, co
 			finfo.Name = dstruct.cFileName;
 			finfo.FullPath = fullpath + finfo.Name;
 
-			time_t createtm;
+//			time_t createtm;
 			ull = 0;
 			ull = reinterpret_cast<const ULONGLONG&>(dstruct.ftCreationTime);
 			ull -= 116444736000000000;
@@ -291,7 +274,7 @@ void dirgetfilelist(const std::string& dirname, std::vector<DirEntry>& dlist, co
 			}
 			finfo.CreationTime = static_cast<time_t>(ull);
 
-			time_t modifytm;
+//			time_t modifytm;
 			ull = 0;
 			ull = reinterpret_cast<const ULONGLONG&>(dstruct.ftLastWriteTime);
 			ull -= 116444736000000000;

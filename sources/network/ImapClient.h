@@ -1,8 +1,8 @@
 #ifndef _IMAP_CLIENT
 #define _IMAP_CLIENT
 
-#include "Mail.h"
-#include "SecurityType.h"
+#include "../data/Mail.h"
+#include "../data/SecurityType.h"
 #include "TcpClient.h"
 #include <string>
 
@@ -23,14 +23,17 @@ public:
 	bool Login();
 	bool Logout();
 	bool GetDirectory(std::string dirname, unsigned long &emailCount, unsigned long& uidNext);
+	bool SelectDirectory(std::string dirname);
 	bool GetEmailsSince(std::string dirname, std::string &fromdate, std::string &uidlist);
 	bool GetEmailsPrior(std::string dirname, std::string& fromdate, std::string& uidlist);
-	bool GetMessageHeader(long uid, MailHeader &hdr);
-	bool GetMessageBody(long uid, MailBody &bdy);
-	bool DeleteMessage(long msgno);
-	bool FlagMessage(long msgno, std::string flag);
-	bool Expunge(long msgno);
-	bool MarkAsSeen(long msgno);
+	bool GetEmailsRecent(std::string dirname, std::string& uidlist);
+	bool GetEmailsAll(std::string dirname, std::string& uidlist);
+	bool GetMessageHeader(std::string& uid, Mail& mail);
+	bool GetMessageBody(std::string& uid, Mail& mail);
+	bool DeleteMessage(std::string& uid);
+	bool FlagMessage(std::string& uid, std::string flag);
+	bool MarkAsSeen(std::string& uid);
+	bool Expunge(std::string& dir);
     std::string Error();
     std::string Account();
 private:
@@ -41,7 +44,7 @@ private:
 
 	SecurityType securityType;
 	std::string currentDirectory;
-	std::string _Error;
+	std::string errorStr;
 
 	TcpClient bearer;
 };

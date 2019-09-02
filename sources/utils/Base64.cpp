@@ -21,10 +21,11 @@ Base64::Base64()
 
 
 void Base64::EncodeBase64(const unsigned char *data,  size_t input_length, unsigned long &output_length, std::string &encodedString)
-{
-  output_length = 4 * ((input_length + 2) / 3);
-
-  char *encoded_data = new char[output_length+1];
+{  
+  output_length = (unsigned long) input_length + 2;
+  output_length /= 3;
+  output_length *= 4;
+  char *encoded_data = new char[output_length+1];//bug
   memset(encoded_data, 0, output_length+1);
 
   if(encoded_data == NULL)
@@ -66,7 +67,7 @@ unsigned char* Base64::DecodeBase64(const char *data,  size_t input_length,  uns
 
   if(decodingtable == NULL)
   {
-      decodingtable = new char[256];
+      decodingtable = new char[256];//bug
 
       for (int i = 0; i < 64; i++)
       {
@@ -76,7 +77,8 @@ unsigned char* Base64::DecodeBase64(const char *data,  size_t input_length,  uns
 
   if (input_length % 4 != 0) return NULL;
 
-  output_length = input_length / 4 * 3;
+  output_length = (unsigned long) input_length * 3;
+  output_length /= 4;
   if (data[input_length - 1] == '=') (output_length)--;
   if (data[input_length - 2] == '=') (output_length)--;
 
