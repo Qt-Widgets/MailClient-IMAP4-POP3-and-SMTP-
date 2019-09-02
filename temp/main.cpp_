@@ -1,0 +1,16 @@
+#include "AddressBookService.h"
+
+int main(int argc, char *argv[])
+{
+    AddressBookService* app = new AddressBookService(argc, argv);//bug
+
+	if (!app->Initialize())
+	{
+		return -1;
+	}
+
+	app->StartListOnlyLoop();
+    app->StartMainLoop();
+
+    return 0;
+}
