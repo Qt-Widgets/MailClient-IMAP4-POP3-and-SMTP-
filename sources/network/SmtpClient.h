@@ -1,8 +1,8 @@
 #ifndef _SMTP_CLIENT
 #define _SMTP_CLIENT
 
-#include "../data/Mail.h"
-#include "../data/SecurityType.h"
+#include "Mail.h"
+#include "SecurityType.h"
 #include "TcpClient.h"
 #include <string>
 

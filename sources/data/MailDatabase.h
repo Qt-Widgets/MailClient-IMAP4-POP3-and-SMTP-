@@ -7,8 +7,8 @@
 #include <thread>
 #include <mutex>
 #include "Profile.h"
-#include "Mail.h"
 #include "Contact.h"
+#include "../network/Mail.h"
 #include "../../3rdparty/sqlite3.h"
 
 typedef std::list<std::string> Row;

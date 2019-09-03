@@ -2,7 +2,7 @@
 #define _MAIL_STORAGE
 
 #include <string>
-#include "Mail.h"
+#include "../network/Mail.h"
 
 using namespace std;
 
