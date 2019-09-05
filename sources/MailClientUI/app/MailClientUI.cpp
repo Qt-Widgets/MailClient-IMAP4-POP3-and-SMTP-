@@ -1,11 +1,14 @@
 #include "MailClientUI.h"
 #include "../../utils/StringEx.h"
 #include "../../data/MailStorage.h"
+#include "../../network/TcpClient.h"
 
 MailClientUI* mailClientPtr = nullptr;
 
 void DeSerializeProfile(Profile& prf, std::string& str);
 void SerializeProfile(Profile& prf, std::string& str);
+
+void mailBoxPoller(MailClientUI* appPtr);
 
 MailClientUI::MailClientUI(int argc, char *argv[]) : QApplication (argc, argv)
 {
@@ -16,6 +19,85 @@ MailClientUI::MailClientUI(int argc, char *argv[]) : QApplication (argc, argv)
 
 MailClientUI::~MailClientUI()
 {
+}
+
+bool MailClientUI::InitializeDB()
+{
+	std::string curr_dir, parent_dir;
+
+	dircurrentdirectory(curr_dir);
+	dirgetparentdirectory(curr_dir, parent_dir);
+
+	std::string dbcdir = parent_dir + "/db/";
+
+	std::string mail_db_file = dbcdir + "Mails.db";
+	std::string contact_db_file = dbcdir + "Contacts.db";
+
+	std::string errmsg;
+
+	if (!dirisdirectory(dbcdir))
+	{
+		dircreatedirectory(dbcdir);
+		MailDatabase::CreateDatabase(mail_db_file);
+		ContactDatabase::CreateDatabase(contact_db_file);
+	}
+	else
+	{
+		MailDatabase temp_mail_db;
+		if (!temp_mail_db.OpenDatabase(mail_db_file, errmsg))
+		{
+			remove(mail_db_file.c_str());
+			MailDatabase::CreateDatabase(mail_db_file);
+		}
+		else
+		{
+			temp_mail_db.CloseDatabase();
+		}
+
+		MailDatabase temp_contact_db;
+		if (!temp_contact_db.OpenDatabase(contact_db_file, errmsg))
+		{
+			remove(contact_db_file.c_str());
+			MailDatabase::CreateDatabase(contact_db_file);
+		}
+		else
+		{
+			temp_contact_db.CloseDatabase();
+		}
+	}
+
+	return (mailDb.OpenDatabase(mail_db_file, errmsg) && contactDb.OpenDatabase(contact_db_file, errmsg));
+}
+
+bool MailClientUI::InitializeNetwork()
+{
+	TcpClient cl;
+
+	std::string request = "GET / HTTP/1.1\r\nHost: api.ipify.org\r\nConnection: close\r\n\r\n";
+	std::string response = "";
+
+	if (cl.CreateSocket("api.ipify.org", 443, true))
+	{
+		int retcode = 0;
+		if (cl.ConnectSocket(retcode))
+		{
+			cl.SendString(request);
+
+			cl.ReceiveString(response);
+
+			std::vector<std::string> tokens;
+
+			strsplit(response, tokens, "\r\n", true);
+
+			if (strcontains(tokens[0].c_str(), "200 OK"))
+			{
+				publicIpAddress = tokens[tokens.size() - 1];
+			}
+		}
+	}
+
+	std::thread pollerthread(mailBoxPoller, this);
+	pollerthread.detach();
 }
 
 bool MailClientUI::InitializeUI()
@@ -60,18 +142,6 @@ ThemeSetting MailClientUI::Theme()
 	return theme;
 }
 
-bool MailClientUI::SetupCommQueue()
-{
-    mailQueue = mailRequestQueue.Open("rushpriority", false);
-
-    contactQueue = contactRequestQueue.Open("addressbooklist", false);
-
-    if(mailQueue && contactQueue)
-        return true;
-    else
-        return false;
-}
-
 bool MailClientUI::FetchProfiles()
 {
     return GetProfileList(profiles);
@@ -96,76 +166,53 @@ bool MailClientUI::FetchDirectories()
 
 bool MailClientUI::FetchConfiguration()
 {
-	std::string comm = "rushpriority_ui|GET CONFIGURATION\n";
+	//std::string comm = "rushpriority_ui|GET CONFIGURATION\n";
 
-	mailRequestQueue.WriteLine(comm);
+	//mailClientQueue.WriteLine(comm);
 
-	std::string line;
+	//std::string line;
 
-	while (mailRequestQueue.ReadLine(line))
-	{
-		if (line == "<END>")
-		{
-			break;
-		}
+	//while (mailClientQueue.ReadLine(line))
+	//{
+	//	if (line == "<END>")
+	//	{
+	//		break;
+	//	}
 
-		std::vector<std::string> tokens;
+	//	std::vector<std::string> tokens;
 
-		strsplit(line, tokens, "::", true);
+	//	strsplit(line, tokens, "::", true);
 
-		if (tokens.size() == 2)
-		{
-			configuration[tokens[0]] = tokens[1];
-		}
-	}
+	//	if (tokens.size() == 2)
+	//	{
+	//		configuration[tokens[0]] = tokens[1];
+	//	}
+	//}
 
 	return true;
 }
 
 bool MailClientUI::GetProfileList(std::vector<Profile> &ctlist)
 {
-    std::string comm = "rushpriority_ui|LIST PROFILES\n";
+	std::string response;
 
-    mailRequestQueue.WriteLine(comm);
+	if (mailDb.GetProfiles(response, ""))
+	{
+		std::vector<std::string> resplines;
+		strsplit(response, resplines, '\n', true);
 
-    std::string line;
+		for (auto pr : resplines)
+		{
+			Profile prf;
+			DeSerializeProfile(prf, pr);
 
-	std::vector<std::string> resplines;
+			ctlist.push_back(prf);
+		}
 
-    while(mailRequestQueue.ReadLine(line))
-    {
-        if(line == "<END>")
-        {
-            break;
-        }
+		return true;
+	}
 
-        resplines.push_back(line);
-    }
-
-    if(resplines.size() < 2)
-    {
-        return false;
-    }
-
-    //Omit the header
-	resplines.erase(resplines.begin(), resplines.begin() + 1);
-
-    for(auto pr : resplines)
-    {
-		std::vector<std::string> fields;
-
-        Profile prf;
-        DeSerializeProfile(prf, pr);
-
-        ctlist.push_back(prf);
-    }
-
-    if(ctlist.size() < 1)
-    {
-        return false;
-    }
-
-    return true;
+    return false;
 }
 
 bool MailClientUI::GetProfileInformation(std::string &str, Profile &prf)
@@ -174,13 +221,13 @@ bool MailClientUI::GetProfileInformation(std::string &str, Profile &prf)
     comm += str;
     comm += "\n";
 
-    mailRequestQueue.WriteLine(comm);
+    mailClientQueue.WriteLine(comm);
 
     std::string line;
 
 	std::vector<std::string> resplines;
 
-    while(mailRequestQueue.ReadLine(line))
+    while(mailClientQueue.ReadLine(line))
     {
         if(line == "<END>")
         {
@@ -211,12 +258,12 @@ bool MailClientUI::AddProfile(Profile &obj)
     comm += temp;
     comm += "\n";
 
-    mailRequestQueue.WriteLine(comm);
+    mailClientQueue.WriteLine(comm);
 
     std::string line;
 	bool success = false;
 
-	while (mailRequestQueue.ReadLine(line))
+	while (mailClientQueue.ReadLine(line))
 	{
 		if (line == "<END>")
 		{
@@ -240,12 +287,12 @@ bool MailClientUI::UpdateProfile(Profile &obj)
     comm += temp;
     comm += "\n";
 
-    mailRequestQueue.WriteLine(comm);
+    mailClientQueue.WriteLine(comm);
 
     std::string line;
 	bool success = false;
 
-	while (mailRequestQueue.ReadLine(line))
+	while (mailClientQueue.ReadLine(line))
 	{
 		if (line == "<END>")
 		{
@@ -268,12 +315,12 @@ bool MailClientUI::RemoveProfile(std::string &str)
     comm += str;
     comm += "\n";
 
-    mailRequestQueue.WriteLine(comm);
+    mailClientQueue.WriteLine(comm);
 
     std::string line;
 	bool success = false;
 
-	while (mailRequestQueue.ReadLine(line))
+	while (mailClientQueue.ReadLine(line))
 	{
 		if (line == "<END>")
 		{
@@ -333,13 +380,13 @@ bool MailClientUI::SendEmail(Mail &eml, MailStorageInformation &stg)
 	comm += eml.Header.GetTimeStamp() + "|";
 	comm += "\n";
 
-	mailRequestQueue.WriteLine(comm);
+	mailClientQueue.WriteLine(comm);
 
 	std::string line;
 
 	bool sent = false;
 
-	while (mailRequestQueue.ReadLine(line))
+	while (mailClientQueue.ReadLine(line))
 	{
 		if (line == "<END>")
 		{
@@ -366,13 +413,13 @@ bool MailClientUI::GetAccountDirectories(std::string &profilename, std::vector<s
     comm += profilename;
     comm += "\n";
 
-    mailRequestQueue.WriteLine(comm);
+    mailClientQueue.WriteLine(comm);
 
     std::string line;
 
     resplines.clear();
 
-    while(mailRequestQueue.ReadLine(line))
+    while(mailClientQueue.ReadLine(line))
     {
         if(line == "<END>")
         {
@@ -403,13 +450,13 @@ bool MailClientUI::GetEmails(std::string &profilename, std::string &dirname, std
     comm += dirname;
     comm += "\n";
 
-    mailRequestQueue.WriteLine(comm);
+    mailClientQueue.WriteLine(comm);
 
     std::string line;
 
 	bool header_read = false;
 
-    while(mailRequestQueue.ReadLine(line))
+    while(mailClientQueue.ReadLine(line))
     {
         if(line == "<END>")
         {
@@ -468,13 +515,13 @@ bool MailClientUI::GetEmailsByTerm(std::string& profilename, std::string& dirnam
 	comm += term;
 	comm += "\n";
 
-	mailRequestQueue.WriteLine(comm);
+	mailClientQueue.WriteLine(comm);
 
 	std::string line;
 
 	bool header_read = false;
 
-	while (mailRequestQueue.ReadLine(line))
+	while (mailClientQueue.ReadLine(line))
 	{
 		if (line == "<END>")
 		{
@@ -533,12 +580,12 @@ bool MailClientUI::GetEmailHeader(std::string &profilename, std::string &dirname
 	comm += uid;
 	comm += "\n";
 
-	mailRequestQueue.WriteLine(comm);
+	mailClientQueue.WriteLine(comm);
 
 	std::string line;
 	bool success = false;
 
-	while (mailRequestQueue.ReadLine(line))
+	while (mailClientQueue.ReadLine(line))
 	{
 		if (line == "<END>")
 		{
@@ -564,12 +611,12 @@ bool MailClientUI::GetEmailBody(std::string &profilename, std::string &dirname, 
 	comm += uid;
 	comm += "\n";
 
-	mailRequestQueue.WriteLine(comm);
+	mailClientQueue.WriteLine(comm);
 
 	std::string line;
 	bool success = false;
 
-	while (mailRequestQueue.ReadLine(line))
+	while (mailClientQueue.ReadLine(line))
 	{
 		if (line == "<END>")
 		{
@@ -597,12 +644,12 @@ bool MailClientUI::RemoveEmail(std::string &profilename, std::string &dirname, s
 	comm += messageid;
 	comm += "\n";
 
-	mailRequestQueue.WriteLine(comm);
+	mailClientQueue.WriteLine(comm);
 
 	std::string line;
 	bool success = false;
 
-	while (mailRequestQueue.ReadLine(line))
+	while (mailClientQueue.ReadLine(line))
 	{
 		if (line == "<END>")
 		{
@@ -630,12 +677,12 @@ bool MailClientUI::FlagEmail(std::string &profilename, std::string &dirname, std
 	comm += flag;
 	comm += "\n";
 
-	mailRequestQueue.WriteLine(comm);
+	mailClientQueue.WriteLine(comm);
 
 	std::string line;
 	bool success = false;
 
-	while (mailRequestQueue.ReadLine(line))
+	while (mailClientQueue.ReadLine(line))
 	{
 		if (line == "<END>")
 		{
@@ -661,12 +708,12 @@ bool MailClientUI::MarkEmailSeen(std::string &profilename, std::string &dirname,
 	comm += uid;
 	comm += "\n";
 
-	mailRequestQueue.WriteLine(comm);
+	mailClientQueue.WriteLine(comm);
 
 	std::string line;
 	bool success = false;
 
-	while (mailRequestQueue.ReadLine(line))
+	while (mailClientQueue.ReadLine(line))
 	{
 		if (line == "<END>")
 		{
@@ -690,12 +737,12 @@ bool MailClientUI::PurgeDeleted(std::string &profilename, std::string &dirname)
 	comm += dirname;
 	comm +=	"\n";
 
-	mailRequestQueue.WriteLine(comm);
+	mailClientQueue.WriteLine(comm);
 
 	std::string line;
 	bool success = false;
 
-	while (mailRequestQueue.ReadLine(line))
+	while (mailClientQueue.ReadLine(line))
 	{
 		if (line == "<END>")
 		{
@@ -782,11 +829,11 @@ bool MailClientUI::SearchContacts(std::vector<std::string>& ctlist, std::string&
 	comm += term;
 	comm += "\n";
 
-	contactRequestQueue.WriteLine(comm);
+	mailClientQueue.WriteLine(comm);
 
 	std::string line;
 
-	while (contactRequestQueue.ReadLine(line))
+	while (mailClientQueue.ReadLine(line))
 	{
 		if (line == "<END>")
 		{
@@ -810,11 +857,11 @@ bool MailClientUI::GetAllContacts(std::vector<std::string>& ctlist)
 {
 	std::string comm = "address_book_client|LIST\n";
 
-	contactRequestQueue.WriteLine(comm);
+	mailClientQueue.WriteLine(comm);
 
 	std::string line;
 
-	while (contactRequestQueue.ReadLine(line))
+	while (mailClientQueue.ReadLine(line))
 	{
 		if (line == "<END>")
 		{
@@ -840,12 +887,12 @@ bool MailClientUI::GetContact(const std::string& contactId, Contact& obj)
 	comm += contactId;
 	comm += "\n";
 
-	contactRequestQueue.WriteLine(comm);
+	mailClientQueue.WriteLine(comm);
 
 	std::string line;
 	std::vector<std::string> ctlist;
 
-	while (contactRequestQueue.ReadLine(line))
+	while (mailClientQueue.ReadLine(line))
 	{
 		if (line == "<END>")
 		{
@@ -902,13 +949,13 @@ bool MailClientUI::AddContact(const Contact& obj)
 	comm += temp;
 	comm += "\n";
 
-	contactRequestQueue.WriteLine(comm);
+	mailClientQueue.WriteLine(comm);
 
 	std::string line;
 
 	bool ret = false;
 
-	while (contactRequestQueue.ReadLine(line))
+	while (mailClientQueue.ReadLine(line))
 	{
 		if (line == "<END>")
 		{
@@ -932,13 +979,13 @@ bool MailClientUI::UpdateContact(const Contact& obj)
 	comm += temp;
 	comm += "\n";
 
-	contactRequestQueue.WriteLine(comm);
+	mailClientQueue.WriteLine(comm);
 
 	std::string line;
 
 	bool ret = false;
 
-	while (contactRequestQueue.ReadLine(line))
+	while (mailClientQueue.ReadLine(line))
 	{
 		if (line == "<END>")
 		{
@@ -960,13 +1007,13 @@ bool MailClientUI::RemoveContact(const std::string& contactId)
 	comm += contactId;
 	comm += "\n";
 
-	contactRequestQueue.WriteLine(comm);
+	mailClientQueue.WriteLine(comm);
 
 	std::string line;
 
 	bool ret = false;
 
-	while (contactRequestQueue.ReadLine(line))
+	while (mailClientQueue.ReadLine(line))
 	{
 		if (line == "<END>")
 		{
@@ -1006,4 +1053,120 @@ void MailClientUI::SerializeContact(const Contact& obj, std::string& str)
 	str += obj.Anniversary + ",";
 	str += obj.Notes + ",";
 	str += obj.Photo;
+}
+
+void mailBoxPoller(MailClientUI* appPtr)
+{
+	std::string current_dir, parent_dir, email_dir, profile_dir;
+
+	dircurrentdirectory(current_dir);
+	dirgetparentdirectory(current_dir, parent_dir);
+
+	email_dir = parent_dir + "/emails/";
+
+	if (!dirisdirectory(email_dir))
+	{
+		dircreatedirectory(email_dir);
+	}
+
+	while (true)
+	{
+		std::this_thread::sleep_for(5s);
+
+		std::vector<Profile> plist;
+
+		appPtr->MailDb()->GetProfiles(plist, "");
+
+		for (auto p : plist)
+		{
+			profile_dir = email_dir + p.ProfileName;
+
+			if (!dirisdirectory(profile_dir))
+			{
+				dircreatedirectory(profile_dir);
+			}
+
+			ImapClient imap;
+			imap.SetAccountInformation(p.MailInServer, atoi(p.MailInPort.c_str()), p.EMailId, p.Password, (SecurityType)p.MailInSecurity[0]);
+
+			if (!imap.Connect())
+			{
+				continue;
+			}
+
+			if (!imap.Login())
+			{
+				continue;
+			}
+
+			std::vector<std::string> dirlist;
+
+			if (!imap.GetDirectoryList(dirlist))
+			{
+				continue;
+			}
+
+			for (auto dir : dirlist)
+			{
+				strremove(dir, '"');
+				strremove(dir, '\\');
+
+				std::string storage_dir = profile_dir + "/" + dir;
+
+				if (!dirisdirectory(storage_dir))
+				{
+					dircreatedirectory(storage_dir);
+				}
+
+				imap.SelectDirectory(dir);
+
+				std::string uidstr;
+				std::vector<std::string> uidlist;
+
+				long mail_count = appPtr->MailDb()->GetEmailCount(p.ProfileName, dir);
+
+				if (mail_count > 0)
+				{
+					imap.GetEmailsRecent(dir, uidstr);
+				}
+				else
+				{
+					imap.GetEmailsAll(dir, uidstr);
+				}
+
+				strsplit(uidstr, uidlist, ' ', true);
+
+				for (std::string str : uidlist)
+				{
+					Mail mail;
+					MailStorageInformation inf;
+
+					if (imap.GetMessageHeader(str, mail))
+					{
+						if (mail.Header.GetMessageId().length() < 1)
+						{
+							mail.Header.GenerateMessageId();
+						}
+
+						if (mail.Header.GetTimeStamp().length() < 1)
+						{
+							mail.Header.GenerateTimeStamp();
+						}
+
+						imap.GetMessageBody(str, mail);
+						mail.Body.SetMessageId(mail.Header.GetMessageId());
+						inf.SetAccount(p.ProfileName);
+						inf.SetDirectory(dir);
+						inf.SetUid(str);
+
+						if (appPtr->MailDb()->CreateEmail(mail.Header, inf))
+						{
+							MailStorage stg;
+							stg.StoreMail(storage_dir, mail);
+						}
+					}
+				}
+			}
+		}
+	}
 }

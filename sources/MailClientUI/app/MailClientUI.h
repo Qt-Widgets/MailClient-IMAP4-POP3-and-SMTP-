@@ -11,18 +11,36 @@
 #include <QApplication>
 #include <QMutex>
 #include <QSplashScreen>
+
 #include "MailClientOperations.h"
 #include "ContactOperations.h"
+
 #include "../gui/MainWindow.h"
-#include "../../network/Mail.h"
-#include "../../utils/CommQueue.h"
 #include "../gui/ThemeHandler.h"
+
+#include "../../network/ImapClient.h"
+#include "../../network/SmtpClient.h"
+#include "../../network/Mail.h"
+
+#include "../../data/MailStorage.h"
+#include "../../data/MailDatabase.h"
+#include "../../data/ContactDatabase.h"
+
+#include "../../utils/Logger.h"
+#include "../../utils/Directory.h"
+#include "../../utils/StringEx.h"
+#include "../../utils/CommQueue.h"
+#include "../../utils/Configuration.h"
 
 #include <vector>
 #include <map>
 #include <string>
 
-using namespace std;
+typedef struct MailTransport
+{
+	SmtpClient smtp;
+	ImapClient imap;
+}MailTransport;
 
 class MailClientUI : public QApplication, public MailClientOperations, public ContactOperations
 {
@@ -31,12 +49,13 @@ public:
     explicit MailClientUI(int argc, char *argv[]);
     virtual ~MailClientUI();
 
+	bool InitializeDB();
+	bool InitializeNetwork();
 	bool InitializeUI();
+
 	void ShowSpalsh();
 	void ShowSplashMessage(QString str);
 	void ShowUI();
-
-    bool SetupCommQueue();
 
 	bool FetchConfiguration();
 
@@ -86,16 +105,17 @@ private slots:
 	MainWindow applicationWindow;
 	QSplashScreen applicationSpalsh;
 
-    CommQueue mailRequestQueue;
-    CommQueue contactRequestQueue;
-
-    bool mailQueue, contactQueue;
-
 	std::vector<Profile> profiles;
     std::map<std::string, std::vector<std::string>> directories;
 	std::map<std::string, std::string> configuration;
 
 	ThemeSetting theme;
+
+	std::string appName, publicIpAddress;
+	MailDatabase mailDb;
+	ContactDatabase contactDb;
+	Configuration appConfig;
+	std::map<std::string, Profile> profileList;
 };
 
 extern MailClientUI* mailClientPtr;

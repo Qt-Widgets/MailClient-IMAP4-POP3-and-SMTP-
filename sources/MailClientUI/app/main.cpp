@@ -11,16 +11,16 @@ int main(int argc, char *argv[])
 
 	app->ShowSpalsh();
 	app->processEvents();
-	app->ShowSplashMessage("Opening message queues");
-	
-	if (!app->SetupCommQueue())
+
+	app->ShowSplashMessage("Opening storage");
+	if (!app->InitializeDB())
 	{
 		QMessageBox msg;
-		msg.setText("RushPriority service and addressbook service are not running");
+		msg.setText("MailClient could not open storage");
 		msg.exec();
-		//return -1;
+		return -1;
 	}
-
+	
 	app->FetchConfiguration();
 	app->FetchProfiles();
 	app->FetchDirectories();

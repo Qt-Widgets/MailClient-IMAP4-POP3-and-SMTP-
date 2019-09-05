@@ -60,8 +60,8 @@ bool MailClientCore::Initialize()
 
 	std::string dbcdir = parent_dir + "/db/";
 
-	std::string mail_db_file = dbcdir + "MailClientCoreMails.db";
-	std::string contact_db_file = dbcdir + "MailClientCoreContacts.db";
+	std::string mail_db_file = dbcdir + "Mails.db";
+	std::string contact_db_file = dbcdir + "Contacts.db";
 
 	std::string errmsg;
 
@@ -112,7 +112,7 @@ void MailClientCore::StartMessageLoop()
 
 	while (true)
 	{
-		if (!cmdStream.Open("MailClientCore", true))
+		if (!cmdStream.Open("MailClient", true))
 		{
 			return;
 		}

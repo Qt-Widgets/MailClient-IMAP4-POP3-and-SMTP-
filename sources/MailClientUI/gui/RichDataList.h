@@ -18,10 +18,8 @@ public:
     QSize sizeHint ( const QStyleOptionViewItem & option, const QModelIndex & index ) const;
     virtual ~RichDataListItemDelegate();
 private:
-    void paintLarge(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const;
-    void paintSmall(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const;
-    bool _Large;
-    int  _Height;
+    bool detailedRendering;
+    int  rowHeight;
 };
 
 class RichDataList : public QListWidget

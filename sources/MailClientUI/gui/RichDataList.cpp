@@ -3,148 +3,123 @@
 
 RichDataListItemDelegate::RichDataListItemDelegate(bool large, QObject *parent)
 {
-    _Large = large;
+    detailedRendering = large;
 
-    if(_Large)
+    if(detailedRendering)
     {
-        _Height = 60;
+        rowHeight = 60;
     }
     else
     {
-        _Height = 40;
+        rowHeight = 40;
     }
 }
 
 void RichDataListItemDelegate::paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const
 {
-    if(_Large)
-    {
-        paintLarge(painter, option, index);
-    }
-    else
-    {
-        paintSmall(painter, option, index);
-    }
-}
+	QIcon ic = QIcon(qvariant_cast<QPixmap>(index.data(Qt::DecorationRole)));
+	QString title = index.data(Qt::DisplayRole).toString();
+	QString description = index.data(Qt::UserRole).toString();
+	bool bolden_normal = index.data(Qt::UserRole + 2).toBool();
 
-void RichDataListItemDelegate::paintLarge(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const
-{
-    QIcon ic = QIcon(qvariant_cast<QPixmap>(index.data(Qt::DecorationRole)));
-    QString title = index.data(Qt::DisplayRole).toString();
-    QString description = index.data(Qt::UserRole).toString();
-    int imageSpace = 10;
+	int imageSpace = 0;
+
+	if (detailedRendering)
+	{
+		imageSpace = 10;
+	}
+	else
+	{
+		imageSpace = 5;
+	}
+
 	QRect r = option.rect;
 
-    QPen penTextNormal(currentThemePalette().text(), 1, Qt::SolidLine);
-    QPen penTextSelected(currentThemePalette().highlight(), 1, Qt::SolidLine);
+	QRect widget_rect = option.rect;
 
-    QFont fontHeadingNormal(currentFont(), 10, QFont::Normal);
-    QFont fontDescriptionNormal(currentFont(), 9, QFont::Normal);
-    QFont fontHeadingHighlighted(currentFont(), 10, QFont::Bold);
-    QFont fontDescriptionHighlighted(currentFont(), 9, QFont::Bold);
+	QPen penText(currentThemePalette().text(), 1, Qt::SolidLine);
+	QPen penItemSeparator(currentThemePalette().text(), 1, Qt::DashLine);
 
-    if(option.state & QStyle::State_Selected)
-    {
-        painter->setBrush(currentThemePalette().highlight());
-    }
-    else
-    {
-        painter->setBrush(currentThemePalette().window());
-    }
+	QFont fontHeadingNormal(currentFont(), 10, QFont::Normal);
+	QFont fontDescriptionNormal(currentFont(), 9, QFont::Normal);
+	QFont fontHeadingBold(currentFont(), 10, QFont::Bold);
+	QFont fontDescriptionBold(currentFont(), 9, QFont::Bold);
 
-    painter->setPen(penTextSelected);
+	if (option.state & QStyle::State_Selected)
+	{
 
-    if(option.state & QStyle::State_Selected)
-    {
-        painter->setPen(penTextSelected);
-    }
-    else
-    {
-        painter->setPen(penTextNormal);
-    }
+		painter->fillRect(widget_rect, currentThemePalette().highlight());
+	}
+	else
+	{
+		painter->fillRect(widget_rect, currentThemePalette().window());
+	}
 
-    if (!ic.isNull())
-    {
-        r = option.rect.adjusted(5, 10, -10, -10);
-        ic.paint(painter, r, Qt::AlignVCenter|Qt::AlignLeft);
-        imageSpace = 55;
-    }
+	if (!ic.isNull())
+	{
+		if (detailedRendering)
+		{
+			QRect image_rect = option.rect.adjusted(5, 10, -10, -10);
+			ic.paint(painter, image_rect, Qt::AlignVCenter | Qt::AlignLeft);
 
-    r = option.rect.adjusted(imageSpace, 0, -10, -30);
+			imageSpace = 55;
+		}
+		else
+		{
+			QRect image_rect = option.rect.adjusted(5, 5, -10, -5);
+			ic.paint(painter, image_rect, Qt::AlignVCenter | Qt::AlignLeft);
 
-    if(option.state & QStyle::State_Selected)
-    {
-        painter->setFont(fontHeadingHighlighted);
-    }
-    else
-    {
-        painter->setFont(fontHeadingNormal);
-    }
+			imageSpace = 40;
+		}
+	}
 
-    painter->drawText(r.left(), r.top(), r.width(), r.height(), Qt::AlignBottom|Qt::AlignLeft, title, &r);
 
-    r = option.rect.adjusted(imageSpace, 30, -10, 0);
+	if (bolden_normal)
+	{
+		painter->setFont(fontHeadingNormal);
+	}
+	else
+	{
+		painter->setFont(fontHeadingBold);
+	}
 
-    if(option.state & QStyle::State_Selected)
-    {
-        painter->setFont(fontDescriptionHighlighted);
-    }
-    else
-    {
-        painter->setFont(fontDescriptionNormal);
-    }
+	if (detailedRendering)
+	{
+		r = option.rect.adjusted(imageSpace, 0, -10, -30);
+		painter->setPen(penText);
+		painter->drawText(r.left(), r.top(), r.width(), r.height(), Qt::AlignBottom | Qt::AlignLeft, title, &r);
+	}
+	else
+	{
+		r = option.rect.adjusted(imageSpace, 10, -10, -15);
+		painter->setPen(penText);
+		painter->drawText(r.left(), r.top(), r.width(), r.height(), Qt::AlignVCenter | Qt::AlignLeft, title, &r);
+	}
 
-    painter->drawText(r.left(), r.top(), r.width(), r.height(), Qt::AlignLeft, description, &r);
-}
+	r = option.rect.adjusted(imageSpace, 30, -10, 0);
 
-void RichDataListItemDelegate::paintSmall(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index ) const
-{
-    QIcon ic = QIcon(qvariant_cast<QPixmap>(index.data(Qt::DecorationRole)));
-    QString title = index.data(Qt::DisplayRole).toString();
-    QString description = index.data(Qt::UserRole).toString();
-    QRect r = option.rect;
+	if (bolden_normal)
+	{
+		painter->setFont(fontDescriptionNormal);
+	}
+	else
+	{
+		painter->setFont(fontDescriptionBold);
+	}
 
-    QPen penTextNormal(currentThemePalette().text(), 1, Qt::SolidLine);
-    QPen penTextSelected(currentThemePalette().highlight(), 1, Qt::SolidLine);
+	if (detailedRendering)
+	{
+		painter->setPen(penText);
+		painter->drawText(r.left(), r.top(), r.width(), r.height(), Qt::AlignLeft, description, &r);
+	}
 
-    QFont fontHeadingNormal(currentFont(), 9, QFont::Normal);
-    QFont fontHeadingHighlighted(currentFont(), 8, QFont::Bold);
-
-    if(option.state & QStyle::State_Selected)
-    {
-        painter->setBrush(currentThemePalette().highlight());
-    }
-    else
-    {
-        painter->setBrush(currentThemePalette().window());
-    }
-
-    painter->setPen(penTextSelected);
-
-    if(option.state & QStyle::State_Selected)
-    {
-        painter->setPen(penTextSelected);
-    }
-    else
-    {
-        painter->setPen(penTextNormal);
-    }
-
-    if(option.state & QStyle::State_Selected)
-    {
-        painter->setFont(fontHeadingHighlighted);
-    }
-    else
-    {
-        painter->setFont(fontHeadingNormal);
-    }
-
-    painter->drawText(r.left() + 55 , r.top(), r.width(), r.height(), Qt::AlignVCenter|Qt::AlignLeft, title, &r);
+	painter->setPen(penItemSeparator);
+	painter->drawLine(widget_rect.left(), widget_rect.bottom(), widget_rect.left() + widget_rect.width(), widget_rect.bottom());
 }
 
 QSize RichDataListItemDelegate::sizeHint ( const QStyleOptionViewItem & option, const QModelIndex & index ) const
 {
-    return QSize(200, _Height);
+    return QSize(200, rowHeight);
 }
 
 RichDataListItemDelegate::~RichDataListItemDelegate()

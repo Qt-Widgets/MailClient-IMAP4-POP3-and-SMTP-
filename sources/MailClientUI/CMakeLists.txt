@@ -7,6 +7,21 @@ message("WARNING: On Windows, please set the Qt5_DIR to the Qt5 CMake configurat
 set(Qt5_DIR C:/Qt/5.13.0/msvc2017_64/lib/cmake/Qt5)
 endif()
 
+if(WIN32)
+message("### WARNING: For Windows builds please adjust the location of libssl in next couple of lines")
+include_directories(./sources/ ../../utils ../../3rdparty C:/oss/usr/include/ C:/oss/usr/include/openssl/)
+link_directories(C:/oss/usr/lib)
+else()
+include_directories(./sources/ ./include/ ../../utils ../../3rdparty /include/ /usr/include/ /usr/local/include/ /usr/include/openssl/)
+link_directories(./lib/ /lib /usr/lib/ /usr/local/lib/ /usr/lib/x86_64-linux-gnu/ /usr/lib/arm-linux-gnu/)
+endif()
+
+if(WIN32)
+link_libraries(ws2_32 libssl libcrypto)
+else()
+link_libraries(dl rt pthread ssl crypto)
+endif()
+
 find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 
 set(CMAKE_AUTOMOC ON)
