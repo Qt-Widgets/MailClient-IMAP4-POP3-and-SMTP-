@@ -18,7 +18,7 @@
 #include <QFileDialog>
 #include <QByteArray>
 #include <QBuffer>
-#include "../../data/Contact.h"
+#include "../data/Contact.h"
 #include "PictureBox.h"
 
 class ContactDetails : public QWidget

@@ -2,7 +2,7 @@
 #define CONTACT_OPERATIONS
 
 #include <QObject>
-#include "../../data/Contact.h"
+#include "../data/Contact.h"
 
 #include <vector>
 #include <string>

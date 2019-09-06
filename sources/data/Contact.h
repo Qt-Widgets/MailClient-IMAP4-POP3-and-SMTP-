@@ -2,6 +2,7 @@
 #define CONTACT_H
 
 #include <string>
+#include "../utils/StringEx.h"
 
 using namespace std;
 

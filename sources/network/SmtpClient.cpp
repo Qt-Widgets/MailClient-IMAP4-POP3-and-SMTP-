@@ -1,6 +1,6 @@
 #include <memory.h>
-#include "../../utils/StringEx.h"
-#include "../../utils/Base64.h"
+#include "../utils/StringEx.h"
+#include "../utils/Base64.h"
 #include "SmtpClient.h"
 
 SmtpClient::SmtpClient()

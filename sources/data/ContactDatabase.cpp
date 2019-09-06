@@ -1,5 +1,5 @@
 #include "ContactDatabase.h"
-#include "../../utils/StringEx.h"
+#include "../utils/StringEx.h"
 #include <memory.h>
 #include <fstream>
 

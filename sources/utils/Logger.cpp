@@ -1,4 +1,16 @@
+#if defined(_WIN32) || defined(WIN32)
+#include <process.h>
+#define getpid()	_getpid()
+#define pid_t    long
+#else
+#include <unistd.h> 
+#endif
+
 #include "Logger.h"
+#include "StringEx.h"
+#include "Directory.h"
+#include "DateTime.h"
+
 #include <stdarg.h>
 #include <memory.h>
 #include <string.h>

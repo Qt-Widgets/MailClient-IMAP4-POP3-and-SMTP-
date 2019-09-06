@@ -1,13 +1,12 @@
 #ifndef	_TCP_CLIENT
 #define	_TCP_CLIENT
 
-#include <string>
 #include "Network.h"
-#include "../../utils/StringEx.h"
+#include <string>
 
 using namespace std;
 
-class SocketReference;
+class TcpClientAttributes;
 
 class TcpClient
 {
@@ -38,22 +37,7 @@ public:
 
 	int PendingPreFetchedBufferSize();
 private:
-	bool				connected;
-	unsigned long		socketFd;
-	sockaddr_in			serverAddress;
-	std::string 		serverName;
-	int					serverPort;
-	size_t				preFetchedBufferSize;
-	unsigned char*		preFetchedBuffer;
-	int					packetSize;
-	unsigned char*		packet;
-	char				packetDelimeter[32];
-	bool				requireSSL;
-	PacketBehaviour		phv;
-
-	const SSL_METHOD*	SSLMethod;
-	SSL_CTX*			SSLContext;
-	SSL*				SSLSession;
+	TcpClientAttributes* implStructPtr;
 };
 
 #endif

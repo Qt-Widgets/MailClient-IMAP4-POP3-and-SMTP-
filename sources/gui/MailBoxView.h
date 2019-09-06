@@ -5,7 +5,7 @@
 #include <QTreeWidgetItem>
 #include <QtCore>
 #include "MailView.h"
-#include "../../network/Mail.h"
+#include "../network/Mail.h"
 #include "RichDataList.h"
 #include <map>
 #include <string>

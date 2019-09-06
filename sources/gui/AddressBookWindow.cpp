@@ -1,6 +1,6 @@
 #include "AddressBookWindow.h"
-#include "../../data/Contact.h"
-#include "../../utils/StringEx.h"
+#include "../data/Contact.h"
+#include "../utils/StringEx.h"
 #include "HorizontalLine.h"
 #include "VerticalLine.h"
 #include "ThemeHandler.h"

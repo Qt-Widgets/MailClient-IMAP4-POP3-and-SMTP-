@@ -2,8 +2,8 @@
 #define MAILCLIENT_OPERATIONS
 
 #include <QObject>
-#include "../../data/Profile.h"
-#include "../../network/Mail.h"
+#include "../data/Profile.h"
+#include "../network/Mail.h"
 
 #include <vector>
 #include <string>

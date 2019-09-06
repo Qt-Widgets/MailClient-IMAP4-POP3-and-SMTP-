@@ -5,7 +5,7 @@
 #include <QTreeWidgetItem>
 #include <QtCore>
 #include <QMap>
-#include "../../network/Mail.h"
+#include "../network/Mail.h"
 #include <vector>
 #include <string>
 

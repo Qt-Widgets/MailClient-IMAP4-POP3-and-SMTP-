@@ -1,8 +1,8 @@
 #include "MainWindow.h"
 #include "HorizontalLine.h"
 #include "VerticalLine.h"
-#include "../../data/MailStorage.h"
-#include "../app/MailClientUI.h"
+#include "../data/MailStorage.h"
+#include "../app/MailClient.h"
 
 #include <string>
 

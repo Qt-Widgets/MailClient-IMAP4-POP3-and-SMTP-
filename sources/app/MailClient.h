@@ -1,5 +1,7 @@
-#ifndef MAIL_CLIENT_UI
-#define MAIL_CLIENT_UI
+#ifndef MAIL_CLIENT
+#define MAIL_CLIENT
+
+#include "../network/TcpClient.h"
 
 #include <QtCore>
 #include <QObject>
@@ -18,19 +20,18 @@
 #include "../gui/MainWindow.h"
 #include "../gui/ThemeHandler.h"
 
-#include "../../network/ImapClient.h"
-#include "../../network/SmtpClient.h"
-#include "../../network/Mail.h"
+#include "../network/ImapClient.h"
+#include "../network/SmtpClient.h"
+#include "../network/Mail.h"
 
-#include "../../data/MailStorage.h"
-#include "../../data/MailDatabase.h"
-#include "../../data/ContactDatabase.h"
+#include "../data/MailStorage.h"
+#include "../data/MailDatabase.h"
+#include "../data/ContactDatabase.h"
 
-#include "../../utils/Logger.h"
-#include "../../utils/Directory.h"
-#include "../../utils/StringEx.h"
-#include "../../utils/CommQueue.h"
-#include "../../utils/Configuration.h"
+#include "../utils/Logger.h"
+#include "../utils/Directory.h"
+#include "../utils/StringEx.h"
+#include "../utils/Configuration.h"
 
 #include <vector>
 #include <map>
@@ -42,12 +43,12 @@ typedef struct MailTransport
 	ImapClient imap;
 }MailTransport;
 
-class MailClientUI : public QApplication, public MailClientOperations, public ContactOperations
+class MailClient : public QApplication, public MailClientOperations, public ContactOperations
 {
     Q_OBJECT
 public:
-    explicit MailClientUI(int argc, char *argv[]);
-    virtual ~MailClientUI();
+    explicit MailClient(int argc, char *argv[]);
+    virtual ~MailClient();
 
 	bool InitializeDB();
 	bool InitializeNetwork();
@@ -118,6 +119,6 @@ private slots:
 	std::map<std::string, Profile> profileList;
 };
 
-extern MailClientUI* mailClientPtr;
+extern MailClient* mailClientPtr;
 
 #endif

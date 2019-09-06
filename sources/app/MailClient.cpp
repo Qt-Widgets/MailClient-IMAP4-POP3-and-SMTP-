@@ -1,29 +1,26 @@
-#include "MailClientUI.h"
-#include "../../utils/StringEx.h"
-#include "../../data/MailStorage.h"
-#include "../../network/TcpClient.h"
+#include "MailClient.h"
 
-MailClientUI* mailClientPtr = nullptr;
+MailClient* mailClientPtr = nullptr;
 
-void mailBoxPoller(MailClientUI* appPtr);
+void mailBoxPoller(MailClient* appPtr);
 
-MailClientUI::MailClientUI(int argc, char *argv[]) : QApplication (argc, argv)
+MailClient::MailClient(int argc, char *argv[]) : QApplication (argc, argv)
 {
     mailClientPtr = this;
     QPixmap pix(":images/splashscreen.png");
 	applicationSpalsh.setPixmap(pix);
 }
 
-MailClientUI::~MailClientUI()
+MailClient::~MailClient()
 {
 }
 
-MailDatabase* MailClientUI::MailDb()
+MailDatabase* MailClient::MailDb()
 {
 	return &mailDb;
 }
 
-bool MailClientUI::InitializeDB()
+bool MailClient::InitializeDB()
 {
 	std::string curr_dir, parent_dir;
 
@@ -71,14 +68,16 @@ bool MailClientUI::InitializeDB()
 	return (mailDb.OpenDatabase(mail_db_file, errmsg) && contactDb.OpenDatabase(contact_db_file, errmsg));
 }
 
-bool MailClientUI::InitializeNetwork()
+bool MailClient::InitializeNetwork()
 {
+	bool ret = false;
+
 	TcpClient cl;
 
 	std::string request = "GET / HTTP/1.1\r\nHost: api.ipify.org\r\nConnection: close\r\n\r\n";
 	std::string response = "";
 
-	if (cl.CreateSocket("api.ipify.org", 443, true))
+	if (/*cl.CreateSocket("api.ipify.org", 443, true)*/ cl.CreateSocket("54.225.92.64", 443, true))
 	{
 		int retcode = 0;
 		if (cl.ConnectSocket(retcode))
@@ -94,62 +93,65 @@ bool MailClientUI::InitializeNetwork()
 			if (strcontains(tokens[0].c_str(), "200 OK"))
 			{
 				publicIpAddress = tokens[tokens.size() - 1];
+				ret = true;
 			}
 		}
 	}
 
 	std::thread pollerthread(mailBoxPoller, this);
 	pollerthread.detach();
+
+	return ret;
 }
 
-bool MailClientUI::InitializeUI()
+bool MailClient::InitializeUI()
 {
 	SettingsView* ptr = applicationWindow.Settings();
 
-	auto a1 = connect(ptr, &SettingsView::SwitchToDarkTheme, this, &MailClientUI::eventSwitchToDarkTheme);
-	auto a2 = connect(ptr, &SettingsView::SwitchToLightTheme, this, &MailClientUI::eventSwitchToLightTheme);
+	auto a1 = connect(ptr, &SettingsView::SwitchToDarkTheme, this, &MailClient::eventSwitchToDarkTheme);
+	auto a2 = connect(ptr, &SettingsView::SwitchToLightTheme, this, &MailClient::eventSwitchToLightTheme);
 
 	return applicationWindow.Initialize();
 }
 
-void MailClientUI::ShowSpalsh()
+void MailClient::ShowSpalsh()
 {
 	applicationSpalsh.show();
 }
 
-void MailClientUI::ShowSplashMessage(QString str)
+void MailClient::ShowSplashMessage(QString str)
 {
 	applicationSpalsh.showMessage(str);
 }
 
-void MailClientUI::ShowUI()
+void MailClient::ShowUI()
 {
 	applicationWindow.show();
 }
 
-void MailClientUI::eventSwitchToLightTheme()
+void MailClient::eventSwitchToLightTheme()
 {
 	theme = Light;
 	setAppThemeLight(this);
 }
 
-void MailClientUI::eventSwitchToDarkTheme()
+void MailClient::eventSwitchToDarkTheme()
 {
 	theme = Dark;
 	setAppThemeDark(this);
 }
 
-ThemeSetting MailClientUI::Theme()
+ThemeSetting MailClient::Theme()
 {
 	return theme;
 }
 
-bool MailClientUI::FetchProfiles()
+bool MailClient::FetchProfiles()
 {
     return GetProfileList(profiles);
 }
 
-bool MailClientUI::FetchDirectories()
+bool MailClient::FetchDirectories()
 {
     for(Profile prf : profiles)
     {
@@ -166,7 +168,7 @@ bool MailClientUI::FetchDirectories()
     return true;
 }
 
-bool MailClientUI::FetchConfiguration()
+bool MailClient::FetchConfiguration()
 {
 	//std::string comm = "rushpriority_ui|GET CONFIGURATION\n";
 
@@ -194,7 +196,7 @@ bool MailClientUI::FetchConfiguration()
 	return true;
 }
 
-bool MailClientUI::GetProfileList(std::vector<Profile> &ctlist)
+bool MailClient::GetProfileList(std::vector<Profile> &ctlist)
 {
 	std::string response = "";
 
@@ -203,11 +205,16 @@ bool MailClientUI::GetProfileList(std::vector<Profile> &ctlist)
 		std::vector<std::string> resplines;
 		strsplit(response, resplines, '\n', true);
 
-		for (auto resp : resplines)
+		if (resplines.size() > 1)
 		{
-			Profile prf;
-			prf.DeSerialize(resp);
-			ctlist.push_back(prf);
+			for (auto resp : resplines)
+			{
+				Profile prf;
+				prf.DeSerialize(resp);
+				ctlist.push_back(prf);
+			}
+
+			ctlist.erase(ctlist.begin(), ctlist.begin() + 1);
 		}
 
 		return true;
@@ -216,7 +223,7 @@ bool MailClientUI::GetProfileList(std::vector<Profile> &ctlist)
     return false;
 }
 
-bool MailClientUI::GetProfileInformation(std::string &str, Profile &prf)
+bool MailClient::GetProfileInformation(std::string &str, Profile &prf)
 {
 	std::string response = "";
 
@@ -236,7 +243,7 @@ bool MailClientUI::GetProfileInformation(std::string &str, Profile &prf)
     return false;
 }
 
-bool MailClientUI::AddProfile(Profile &obj)
+bool MailClient::AddProfile(Profile &obj)
 {
 	std::string str;
 	obj.Serialize(str);
@@ -252,7 +259,7 @@ bool MailClientUI::AddProfile(Profile &obj)
 	return false;
 }
 
-bool MailClientUI::UpdateProfile(Profile &obj)
+bool MailClient::UpdateProfile(Profile &obj)
 {
 	std::string str;
 	obj.Serialize(str);
@@ -268,7 +275,7 @@ bool MailClientUI::UpdateProfile(Profile &obj)
 	return false;
 }
 
-bool MailClientUI::RemoveProfile(std::string &str)
+bool MailClient::RemoveProfile(std::string &str)
 {
 	if (mailDb.DeleteProfile(str))
 	{
@@ -279,7 +286,7 @@ bool MailClientUI::RemoveProfile(std::string &str)
 	return false;
 }
 
-bool MailClientUI::SendEmail(Mail &eml, MailStorageInformation &stg)
+bool MailClient::SendEmail(Mail &eml, MailStorageInformation &stg)
 {
 	bool send_success = false;
 
@@ -353,7 +360,7 @@ bool MailClientUI::SendEmail(Mail &eml, MailStorageInformation &stg)
 	return false;
 }
 
-bool MailClientUI::GetAccountDirectories(std::string &profilename, std::vector<std::string> &resplines)
+bool MailClient::GetAccountDirectories(std::string &profilename, std::vector<std::string> &resplines)
 {
 	Profile pr = profileList[profilename];
 
@@ -384,7 +391,7 @@ bool MailClientUI::GetAccountDirectories(std::string &profilename, std::vector<s
 	return false;
 }
 
-bool MailClientUI::GetEmails(std::string &profilename, std::string &dirname, std::vector<MailHeader> &mails, std::vector<MailStorageInformation>& stgl)
+bool MailClient::GetEmails(std::string &profilename, std::string &dirname, std::vector<MailHeader> &mails, std::vector<MailStorageInformation>& stgl)
 {
 	Profile pf = profileList[profilename];
 
@@ -425,7 +432,7 @@ bool MailClientUI::GetEmails(std::string &profilename, std::string &dirname, std
 	return true;
 }
 
-bool MailClientUI::GetEmailsByTerm(std::string& profilename, std::string& dirname, std::string& term, std::vector<MailHeader>& mails, std::vector<MailStorageInformation>& stgl)
+bool MailClient::GetEmailsByTerm(std::string& profilename, std::string& dirname, std::string& term, std::vector<MailHeader>& mails, std::vector<MailStorageInformation>& stgl)
 {
 	Profile pf = profileList[profilename];
 
@@ -464,7 +471,7 @@ bool MailClientUI::GetEmailsByTerm(std::string& profilename, std::string& dirnam
 	return false;
 }
 
-bool MailClientUI::GetEmailHeader(std::string &profilename, std::string &dirname, std::string &uid)
+bool MailClient::GetEmailHeader(std::string &profilename, std::string &dirname, std::string &uid)
 {
 	Profile pr = profileList[profilename];
 
@@ -495,7 +502,7 @@ bool MailClientUI::GetEmailHeader(std::string &profilename, std::string &dirname
 	return false;
 }
 
-bool MailClientUI::GetEmailBody(std::string &profilename, std::string &dirname, std::string & uid)
+bool MailClient::GetEmailBody(std::string &profilename, std::string &dirname, std::string & uid)
 {
 	Profile pr = profileList[profilename];
 
@@ -529,7 +536,7 @@ bool MailClientUI::GetEmailBody(std::string &profilename, std::string &dirname, 
 	return false;
 }
 
-bool MailClientUI::RemoveEmail(std::string &profilename, std::string &dirname, std::string & uid, std::string& messageid)
+bool MailClient::RemoveEmail(std::string &profilename, std::string &dirname, std::string & uid, std::string& messageid)
 {
 	std::string current_dir, parent_dir, email_dir, profile_dir, email_file;
 
@@ -573,7 +580,7 @@ bool MailClientUI::RemoveEmail(std::string &profilename, std::string &dirname, s
 	return false;
 }
 
-bool MailClientUI::FlagEmail(std::string &profilename, std::string &dirname, std::string &uid, std::string &flag)
+bool MailClient::FlagEmail(std::string &profilename, std::string &dirname, std::string &uid, std::string &flag)
 {
 	Profile pr = profileList[profilename];
 
@@ -598,7 +605,7 @@ bool MailClientUI::FlagEmail(std::string &profilename, std::string &dirname, std
 	return false;
 }
 
-bool MailClientUI::MarkEmailSeen(std::string &profilename, std::string &dirname, std::string &uid)
+bool MailClient::MarkEmailSeen(std::string &profilename, std::string &dirname, std::string &uid)
 {
 	Profile pr = profileList[profilename];
 
@@ -623,7 +630,7 @@ bool MailClientUI::MarkEmailSeen(std::string &profilename, std::string &dirname,
 	return false;
 }
 
-bool MailClientUI::PurgeDeleted(std::string &profilename, std::string &dirname)
+bool MailClient::PurgeDeleted(std::string &profilename, std::string &dirname)
 {
 	Profile pr = profileList[profilename];
 
@@ -648,7 +655,7 @@ bool MailClientUI::PurgeDeleted(std::string &profilename, std::string &dirname)
 	return false;
 }
 
-bool MailClientUI::GetProfile(std::string &emailid, Profile &prof)
+bool MailClient::GetProfile(std::string &emailid, Profile &prof)
 {
     for(auto prf : profiles)
     {
@@ -662,12 +669,12 @@ bool MailClientUI::GetProfile(std::string &emailid, Profile &prof)
     return false;
 }
 
-std::string MailClientUI::KeyValue(std::string key)
+std::string MailClient::KeyValue(std::string key)
 {
 	return configuration[key];
 }
 
-bool MailClientUI::SearchContacts(std::vector<std::string>& ctlist, std::string& term)
+bool MailClient::SearchContacts(std::vector<std::string>& ctlist, std::string& term)
 {
 	std::string response = "";
 
@@ -687,7 +694,7 @@ bool MailClientUI::SearchContacts(std::vector<std::string>& ctlist, std::string&
 	return false;
 }
 
-bool MailClientUI::GetAllContacts(std::vector<std::string>& ctlist)
+bool MailClient::GetAllContacts(std::vector<std::string>& ctlist)
 {
 	std::string response = "";
 
@@ -707,7 +714,7 @@ bool MailClientUI::GetAllContacts(std::vector<std::string>& ctlist)
 	return false;
 }
 
-bool MailClientUI::GetContact(const std::string& contactId, Contact& obj)
+bool MailClient::GetContact(const std::string& contactId, Contact& obj)
 {
 	std::string response = "";
 
@@ -726,7 +733,7 @@ bool MailClientUI::GetContact(const std::string& contactId, Contact& obj)
 	return false;
 }
 
-bool MailClientUI::AddContact(Contact& obj)
+bool MailClient::AddContact(Contact& obj)
 {
 	std::string temp;
 	obj.Serialize(temp);
@@ -743,7 +750,7 @@ bool MailClientUI::AddContact(Contact& obj)
 	return false;
 }
 
-bool MailClientUI::UpdateContact(Contact& obj)
+bool MailClient::UpdateContact(Contact& obj)
 {
 	std::string temp;
 	obj.Serialize(temp);
@@ -760,7 +767,7 @@ bool MailClientUI::UpdateContact(Contact& obj)
 	return false;
 }
 
-bool MailClientUI::RemoveContact(const std::string& contactId)
+bool MailClient::RemoveContact(const std::string& contactId)
 {
 	if (contactDb.RemoveContact(contactId))
 	{
@@ -770,7 +777,7 @@ bool MailClientUI::RemoveContact(const std::string& contactId)
 	return false;
 }
 
-void MailClientUI::LoadProfiles()
+void MailClient::LoadProfiles()
 {
 	std::string current_dir, parent_dir, email_dir, profile_dir;
 
@@ -803,7 +810,7 @@ void MailClientUI::LoadProfiles()
 	}
 }
 
-void mailBoxPoller(MailClientUI* appPtr)
+void mailBoxPoller(MailClient* appPtr)
 {
 	std::string current_dir, parent_dir, email_dir, profile_dir;
 

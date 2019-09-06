@@ -9,7 +9,7 @@
 #include <QListWidget>
 #include <QPushButton>
 
-#include "../../network/Mail.h"
+#include "../network/Mail.h"
 #include "ThemeHandler.h"
 
 class Tasks : public QWidget

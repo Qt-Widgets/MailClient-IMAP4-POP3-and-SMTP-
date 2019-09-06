@@ -1,9 +1,9 @@
 #include "MailBoxView.h"
 #include "MailView.h"
-#include "../../network/Mail.h"
-#include "../../data/MailStorage.h"
-#include "../../utils/StringEx.h"
-#include "../app/MailClientUI.h"
+#include "../network/Mail.h"
+#include "../data/MailStorage.h"
+#include "../utils/StringEx.h"
+#include "../app/MailClient.h"
 
 MailBoxView::MailBoxView(QWidget* parent) : RichDataList(true)
 {

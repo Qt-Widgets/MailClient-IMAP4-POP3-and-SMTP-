@@ -1,6 +1,6 @@
 #include "MailComposer.h"
-#include "../app/MailClientUI.h"
-#include "../../utils/StringEx.h"
+#include "../app/MailClient.h"
+#include "../utils/StringEx.h"
 
 MailComposer::MailComposer(QWidget *parent) : QWidget(parent)
 {

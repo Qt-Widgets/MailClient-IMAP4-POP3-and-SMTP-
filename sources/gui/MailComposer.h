@@ -15,8 +15,8 @@
 #include <QMovie>
 #include <QCheckBox>
 
-#include "../../data/Profile.h"
-#include "../../network/Mail.h"
+#include "../data/Profile.h"
+#include "../network/Mail.h"
 #include "ThemeHandler.h"
 #include "ContactsView.h"
 

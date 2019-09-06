@@ -1,10 +1,10 @@
 
-#include "MailClientUI.h"
+#include "MailClient.h"
 #include <QMessageBox>
 
 int main(int argc, char *argv[])
 {
-	MailClientUI* app = new MailClientUI(argc, argv);
+	MailClient* app = new MailClient(argc, argv);
 
 	setAppThemeLight(app);
 	Q_INIT_RESOURCE(Resources);
@@ -22,8 +22,8 @@ int main(int argc, char *argv[])
 	}
 	
 	app->FetchConfiguration();
-	app->FetchProfiles();
-	app->FetchDirectories();
+	//app->FetchProfiles();
+	//app->FetchDirectories();
 	app->ShowSplashMessage("Initializing main window");
 
 	if(!app->InitializeUI())
@@ -32,6 +32,13 @@ int main(int argc, char *argv[])
 		msg.setText("The application has failed to initialize successfully");
 		msg.exec();
 		return -1;
+	}
+
+	if (!app->InitializeNetwork())
+	{
+		QMessageBox msg;
+		msg.setText("The application has failed to initialize network resources");
+		msg.exec();
 	}
 
 	app->ShowUI();

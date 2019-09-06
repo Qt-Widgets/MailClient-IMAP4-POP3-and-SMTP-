@@ -7,7 +7,7 @@
 #include <thread>
 #include <mutex>
 #include "Contact.h"
-#include "../../3rdparty/sqlite3.h"
+#include "../3rdparty/sqlite3.h"
 
 typedef std::list<std::string> Row;
 typedef std::list<Row> DataSet;

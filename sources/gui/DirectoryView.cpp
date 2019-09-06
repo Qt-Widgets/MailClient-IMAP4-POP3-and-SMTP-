@@ -1,8 +1,8 @@
 #include "DirectoryView.h"
 #include "MainWindow.h"
-#include "../app/MailClientUI.h"
-#include "../../data/Profile.h"
-#include "../../utils/StringEx.h"
+#include "../app/MailClient.h"
+#include "../data/Profile.h"
+#include "../utils/StringEx.h"
 
 DirectoryView::DirectoryView(QWidget *parent) : QTreeWidget(parent)
 {
@@ -23,6 +23,9 @@ DirectoryView::~DirectoryView()
 
 void DirectoryView::Initialize()
 {
+	mailClientPtr->FetchProfiles();
+	mailClientPtr->FetchDirectories();
+
     for(auto pf : *mailClientPtr->ProfileList())
     {
         QTreeWidgetItem *treeItem = new QTreeWidgetItem(this);

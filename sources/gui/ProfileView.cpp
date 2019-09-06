@@ -1,5 +1,5 @@
 #include "ProfileView.h"
-#include "../app/MailClientUI.h"
+#include "../app/MailClient.h"
 
 ProfileView::ProfileView(QWidget* parent) : QWidget(parent)
 {

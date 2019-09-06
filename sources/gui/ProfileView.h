@@ -15,7 +15,7 @@
 #include <QGroupBox>
 #include <QComboBox>
 #include <QToolBar>
-#include "../../data/Profile.h"
+#include "../data/Profile.h"
 #include "ThemeHandler.h"
 
 #include <string>

@@ -1,5 +1,5 @@
 #include "MailDatabase.h"
-#include "../../utils/StringEx.h"
+#include "../utils/StringEx.h"
 #include <memory.h>
 #include <fstream>
 
@@ -229,7 +229,7 @@ void MailDatabase::Serialize(std::string& data)
 			}
 			else
 			{
-				data += fieldval + "|";
+				data += fieldval + ",";
 				index++;
 			}
 		}
