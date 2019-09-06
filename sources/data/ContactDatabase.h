@@ -19,12 +19,12 @@ public:
     ~ContactDatabase();
 
     bool CreateContact(std::vector<std::string> &fieldlist);
-    bool UpdateContact(std::vector <std::string> &fieldlist, std::string & emailid);
-    bool RemoveContact(std::string & emailid);
-    bool GetContacts(std::string &contactlist, std::string & emailid);
-    bool GetContacts(std::list<Contact> &contactlist, std::string &emailid);
+    bool UpdateContact(std::vector <std::string> &fieldlist, const std::string & emailid);
+    bool RemoveContact(const std::string & emailid);
+    bool GetContacts(std::string &contactlist, const std::string & emailid);
+    bool GetContacts(std::list<Contact> &contactlist, const std::string &emailid);
 	bool GetContactList(std::string& contactlist);
-	bool SearchContacts(std::string& contactlist, std::string& term);
+	bool SearchContacts(std::string& contactlist, const std::string& term);
 
 	bool OpenDatabase(const std::string& dbfilename, std::string& errmsg);
 	bool CloseDatabase();

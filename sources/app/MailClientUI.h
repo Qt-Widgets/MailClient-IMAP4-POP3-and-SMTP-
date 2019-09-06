@@ -81,8 +81,8 @@ public:
 	bool SearchContacts(std::vector<std::string>& ctlist, std::string& term);
 	bool GetAllContacts(std::vector<std::string>& ctlist);
 	bool GetContact(const std::string& contactId, Contact& obj);
-	bool AddContact(const Contact& obj);
-	bool UpdateContact(const Contact& obj);
+	bool AddContact(Contact& obj);
+	bool UpdateContact(Contact& obj);
 	bool RemoveContact(const std::string& contactId);
 
 	std::vector<Profile>* ProfileList() { return  &profiles; }
@@ -94,12 +94,12 @@ public:
 
 	ThemeSetting Theme();
 
+	MailDatabase* MailDb();
+
 private slots:
 	void eventSwitchToLightTheme();
 	void eventSwitchToDarkTheme();
-	void SerializeContact(const Contact& obj, string& str);
-	void DeSerializeProfile(Profile& prf, std::string& str);
-	void SerializeProfile(Profile& prf, std::string& str);
+	void LoadProfiles();
 
  private:
 	MainWindow applicationWindow;

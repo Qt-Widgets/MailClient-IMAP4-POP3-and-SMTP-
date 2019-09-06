@@ -252,7 +252,7 @@ bool ContactDatabase::GetContactList(std::string& contactlist)
 	return ret;
 }
 
-bool ContactDatabase::GetContacts(std::string &contactlist, std::string &emailid)
+bool ContactDatabase::GetContacts(std::string &contactlist, const std::string &emailid)
 {
 	mutexRef.lock();
 	bool ret = false;
@@ -325,7 +325,7 @@ bool ContactDatabase::CreateContact(std::vector <std::string> &fieldlist)
 	return ret;
 }
 
-bool ContactDatabase::UpdateContact(std::vector <std::string> &fieldlist, std::string & emailid)
+bool ContactDatabase::UpdateContact(std::vector <std::string> &fieldlist, const std::string & emailid)
 {
 	if (fieldlist.size() < 20)
 	{
@@ -371,7 +371,7 @@ bool ContactDatabase::UpdateContact(std::vector <std::string> &fieldlist, std::s
 	return ret;
 }
 
-bool ContactDatabase::RemoveContact(std::string & emailid)
+bool ContactDatabase::RemoveContact(const std::string & emailid)
 {
 	mutexRef.lock();
 
@@ -390,7 +390,7 @@ bool ContactDatabase::RemoveContact(std::string & emailid)
 	return ret;
 }
 
-bool ContactDatabase::GetContacts(std::list<Contact> &contactlist, std::string & emailid)
+bool ContactDatabase::GetContacts(std::list<Contact> &contactlist, const std::string & emailid)
 {
 	mutexRef.lock();
 
@@ -543,7 +543,7 @@ bool ContactDatabase::GetContacts(std::list<Contact> &contactlist, std::string &
 	return ret;
 }
 
-bool ContactDatabase::SearchContacts(std::string& contactlist, std::string& term)
+bool ContactDatabase::SearchContacts(std::string& contactlist, const std::string& term)
 {
 	mutexRef.lock();
 
