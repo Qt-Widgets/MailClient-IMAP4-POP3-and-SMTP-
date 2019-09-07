@@ -77,7 +77,7 @@ bool MailClient::InitializeNetwork()
 	std::string request = "GET / HTTP/1.1\r\nHost: api.ipify.org\r\nConnection: close\r\n\r\n";
 	std::string response = "";
 
-	if (/*cl.CreateSocket("api.ipify.org", 443, true)*/ cl.CreateSocket("54.225.92.64", 443, true))
+	if (cl.CreateSocket("api.ipify.org", 443, true))
 	{
 		int retcode = 0;
 		if (cl.ConnectSocket(retcode))
@@ -98,8 +98,8 @@ bool MailClient::InitializeNetwork()
 		}
 	}
 
-	std::thread pollerthread(mailBoxPoller, this);
-	pollerthread.detach();
+	//std::thread pollerthread(mailBoxPoller, this);
+	//pollerthread.detach();
 
 	return ret;
 }
@@ -168,30 +168,9 @@ bool MailClient::FetchDirectories()
     return true;
 }
 
-bool MailClient::FetchConfiguration()
+bool MailClient::LoadConfiguration()
 {
-	//std::string comm = "rushpriority_ui|GET CONFIGURATION\n";
-
-	//mailClientQueue.WriteLine(comm);
-
-	//std::string line;
-
-	//while (mailClientQueue.ReadLine(line))
-	//{
-	//	if (line == "<END>")
-	//	{
-	//		break;
-	//	}
-
-	//	std::vector<std::string> tokens;
-
-	//	strsplit(line, tokens, "::", true);
-
-	//	if (tokens.size() == 2)
-	//	{
-	//		configuration[tokens[0]] = tokens[1];
-	//	}
-	//}
+	
 
 	return true;
 }
@@ -202,6 +181,8 @@ bool MailClient::GetProfileList(std::vector<Profile> &ctlist)
 
 	if (mailDb.GetProfiles(response, ""))
 	{
+		profileList.clear();
+
 		std::vector<std::string> resplines;
 		strsplit(response, resplines, '\n', true);
 
@@ -212,6 +193,7 @@ bool MailClient::GetProfileList(std::vector<Profile> &ctlist)
 				Profile prf;
 				prf.DeSerialize(resp);
 				ctlist.push_back(prf);
+				profileList[prf.ProfileName] = prf;
 			}
 
 			ctlist.erase(ctlist.begin(), ctlist.begin() + 1);
@@ -248,7 +230,7 @@ bool MailClient::AddProfile(Profile &obj)
 	std::string str;
 	obj.Serialize(str);
 	std::vector<std::string> fields;
-	strsplit(str, fields, ',', true);
+	strsplit(str, fields, '|', true);
 
 	if (mailDb.CreateProfile(fields))
 	{
@@ -264,7 +246,7 @@ bool MailClient::UpdateProfile(Profile &obj)
 	std::string str;
 	obj.Serialize(str);
 	std::vector<std::string> fields;
-	strsplit(str, fields, ',', true);
+	strsplit(str, fields, '|', true);
 
 	if (mailDb.UpdateProfile(fields, fields[0]))
 	{
@@ -402,30 +384,41 @@ bool MailClient::GetEmails(std::string &profilename, std::string &dirname, std::
 	{
 		if (resp.length() > 0)
 		{
-			MailHeader hdr;
-			MailStorageInformation stg;
+			std::vector<std::string> records;
 
-			std::vector<std::string> tokens;
+			strsplit(resp, records, '\n');
 
-			strsplit(resp, tokens, '|');
+			if (records.size() > 1)
+			{
+				records.erase(records.begin(), records.begin() + 1);
 
-			stg.SetAccount(tokens[0]);
-			hdr.SetMessageId(tokens[1]);
-			stg.SetUid(tokens[2]);
-			hdr.SetSubject(tokens[3]);
-			hdr.SetFrom(tokens[4]);
-			hdr.AddtoToList(tokens[5]);
-			hdr.AddtoCcList(tokens[6]);
-			hdr.AddtoBccList(tokens[7]);
-			stg.SetDirectory(tokens[8]);
-			stg.SetStatus(tokens[9]);
-			hdr.SetTimeStamp(tokens[10]);
+				for (auto rec : records)
+				{
+					MailHeader hdr;
+					MailStorageInformation stg;
 
-			mails.push_back(hdr);
-			stgl.push_back(stg);
+					std::vector<std::string> tokens;
 
+					strsplit(rec, tokens, '|');
 
-			return true;
+					stg.SetAccount(tokens[0]);
+					hdr.SetMessageId(tokens[1]);
+					stg.SetUid(tokens[2]);
+					hdr.SetSubject(tokens[3]);
+					hdr.SetFrom(tokens[4]);
+					hdr.AddtoToList(tokens[5]);
+					hdr.AddtoCcList(tokens[6]);
+					hdr.AddtoBccList(tokens[7]);
+					stg.SetDirectory(tokens[8]);
+					stg.SetStatus(tokens[9]);
+					hdr.SetTimeStamp(tokens[10]);
+
+					mails.push_back(hdr);
+					stgl.push_back(stg);
+				}
+				
+				return true;
+			}
 		}
 	}
 
@@ -442,29 +435,41 @@ bool MailClient::GetEmailsByTerm(std::string& profilename, std::string& dirname,
 	{
 		if (resp.length() > 0)
 		{
-			MailHeader hdr;
-			MailStorageInformation stg;
+			std::vector<std::string> records;
 
-			std::vector<std::string> tokens;
+			strsplit(resp, records, '\n');
 
-			strsplit(resp, tokens, '|');
+			if (records.size() > 1)
+			{
+				records.erase(records.begin(), records.begin() + 1);
 
-			stg.SetAccount(tokens[0]);
-			hdr.SetMessageId(tokens[1]);
-			stg.SetUid(tokens[2]);
-			hdr.SetSubject(tokens[3]);
-			hdr.SetFrom(tokens[4]);
-			hdr.AddtoToList(tokens[5]);
-			hdr.AddtoCcList(tokens[6]);
-			hdr.AddtoBccList(tokens[7]);
-			stg.SetDirectory(tokens[8]);
-			stg.SetStatus(tokens[9]);
-			hdr.SetTimeStamp(tokens[10]);
+				for (auto rec : records)
+				{
+					MailHeader hdr;
+					MailStorageInformation stg;
 
-			mails.push_back(hdr);
-			stgl.push_back(stg);
+					std::vector<std::string> tokens;
 
-			return true;
+					strsplit(rec, tokens, '|');
+
+					stg.SetAccount(tokens[0]);
+					hdr.SetMessageId(tokens[1]);
+					stg.SetUid(tokens[2]);
+					hdr.SetSubject(tokens[3]);
+					hdr.SetFrom(tokens[4]);
+					hdr.AddtoToList(tokens[5]);
+					hdr.AddtoCcList(tokens[6]);
+					hdr.AddtoBccList(tokens[7]);
+					stg.SetDirectory(tokens[8]);
+					stg.SetStatus(tokens[9]);
+					hdr.SetTimeStamp(tokens[10]);
+
+					mails.push_back(hdr);
+					stgl.push_back(stg);
+				}
+
+				return true;
+			}
 		}
 	}
 
@@ -740,7 +745,7 @@ bool MailClient::AddContact(Contact& obj)
 
 	std::vector<std::string> fieldlist;
 
-	strsplit(temp, fieldlist, ',', false);
+	strsplit(temp, fieldlist, '|', false);
 
 	if (contactDb.CreateContact(fieldlist))
 	{
@@ -757,7 +762,7 @@ bool MailClient::UpdateContact(Contact& obj)
 
 	std::vector<std::string> fieldlist;
 
-	strsplit(temp, fieldlist, ',', false);
+	strsplit(temp, fieldlist, '|', false);
 
 	if (contactDb.UpdateContact(fieldlist, fieldlist[0]))
 	{
@@ -808,6 +813,38 @@ void MailClient::LoadProfiles()
 			dircreatedirectory(profile_dir);
 		}
 	}
+}
+
+bool MailClient::SaveConfiguration()
+{
+	return true;
+}
+
+bool MailClient::LoadEmail(std::string& profile, std::string& directory, std::string& uid, Mail& eml)
+{
+	//MailStorage ms;
+
+	//std::string current_dir, parent_dir, eml_dir, profile_dir;
+
+	//dircurrentdirectory(current_dir);
+	//dirgetparentdirectory(current_dir, parent_dir);
+
+	//eml_dir = parent_dir + "/emails/";
+
+	//eml_dir += "/";
+	//eml_dir += profile;
+	//eml_dir += "/";
+	//eml_dir += directory;
+	//eml_dir += "/";
+
+	//eml.Header = minfo.Header;
+
+	//ms.RetrieveMail(eml_dir, eml);
+	//eml.DeSerialize();
+	//mailView.SetEMail(eml);
+	//clientAreaWidget.setCurrentWidget(&mailView);
+
+	return true;
 }
 
 void mailBoxPoller(MailClient* appPtr)

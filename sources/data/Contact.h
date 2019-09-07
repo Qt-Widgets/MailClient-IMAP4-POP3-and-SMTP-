@@ -66,25 +66,25 @@ public:
 	{
 		str.clear();
 
-		str += EmailId + ",";
-		str += AlternateEmailIds + ",";
-		str += FirstName + ",";
-		str += MiddleName + ",";
-		str += LastName + ",";
-		str += WebSite + ",";
-		str += AddressLine1 + ",";
-		str += AddressLine2 + ",";
-		str += City + ",";
-		str += State + ",";
-		str += Country + ",";
-		str += ZipCode + ",";
-		str += WorkPhone + ",";
-		str += HomePhone + ",";
-		str += Fax + ",";
-		str += MobileNo + ",";
-		str += NickName + ",";
-		str += Anniversary + ",";
-		str += Notes + ",";
+		str += EmailId + "|";
+		str += AlternateEmailIds + "|";
+		str += FirstName + "|";
+		str += MiddleName + "|";
+		str += LastName + "|";
+		str += WebSite + "|";
+		str += AddressLine1 + "|";
+		str += AddressLine2 + "|";
+		str += City + "|";
+		str += State + "|";
+		str += Country + "|";
+		str += ZipCode + "|";
+		str += WorkPhone + "|";
+		str += HomePhone + "|";
+		str += Fax + "|";
+		str += MobileNo + "|";
+		str += NickName + "|";
+		str += Anniversary + "|";
+		str += Notes + "|";
 		str += Photo;
 	}
 
@@ -92,7 +92,7 @@ public:
 	{
 		std::vector<std::string> fields;
 
-		strsplit(str, fields, ',');
+		strsplit(str, fields, '|');
 
 		EmailId = fields[0];
 		AlternateEmailIds = fields[1];

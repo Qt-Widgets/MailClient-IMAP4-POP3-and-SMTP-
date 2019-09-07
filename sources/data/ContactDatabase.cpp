@@ -222,7 +222,7 @@ void ContactDatabase::Serialize(std::string& data)
 			}
 			else
 			{
-				data += fieldval + ",";
+				data += fieldval + "|";
 				index++;
 			}
 		}

@@ -27,7 +27,7 @@ public:
 	{
 		std::vector<std::string> tokens;
 
-		strsplit(str, tokens, ',');
+		strsplit(str, tokens, '|');
 
 		ProfileName = tokens[0];
 		EMailId = tokens[1];
@@ -49,23 +49,23 @@ public:
 		str.clear();
 
 		str += ProfileName;
-		str += ",";
+		str += "|";
 		str += EMailId;
-		str += ",";
+		str += "|";
 		str += Password;
-		str += ",";
+		str += "|";
 		str += MailInServer;
-		str += ",";
+		str += "|";
 		str += MailInPort;
-		str += ",";
+		str += "|";
 		str += MailInSecurity;
-		str += ",";
+		str += "|";
 		str += MailOutServer;
-		str += ",";
+		str += "|";
 		str += MailOutPort;
-		str += ",";
+		str += "|";
 		str += MailOutSecurity;
-		str += ",";
+		str += "|";
 		str += LastSync;
 	}
 

@@ -16,7 +16,9 @@ public:
     MailClientOperations() {}
     virtual ~MailClientOperations() {}
 
-	virtual bool FetchConfiguration() = 0;
+	virtual bool LoadConfiguration() = 0;
+	virtual bool SaveConfiguration() = 0;
+	virtual bool LoadEmail(std::string &profile, std::string &directory, std::string &uid, Mail &eml) = 0;
 	virtual bool GetAllContacts(std::vector<std::string>& ctlist) = 0;
 	virtual bool GetProfileList(std::vector<Profile>& ctlist) = 0;
 	virtual bool GetProfileInformation(std::string& str, Profile& prf) = 0;

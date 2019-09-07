@@ -229,7 +229,7 @@ void MailDatabase::Serialize(std::string& data)
 			}
 			else
 			{
-				data += fieldval + ",";
+				data += fieldval + "|";
 				index++;
 			}
 		}

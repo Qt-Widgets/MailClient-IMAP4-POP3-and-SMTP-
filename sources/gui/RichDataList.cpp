@@ -38,7 +38,7 @@ void RichDataListItemDelegate::paint(QPainter * painter, const QStyleOptionViewI
 	QRect widget_rect = option.rect;
 
 	QPen penText(currentThemePalette().text(), 1, Qt::SolidLine);
-	QPen penItemSeparator(currentThemePalette().text(), 1, Qt::DashLine);
+	QPen penItemSeparator(currentThemePalette().text(), 1, Qt::DotLine);
 
 	QFont fontHeadingNormal(currentFont(), 10, QFont::Normal);
 	QFont fontDescriptionNormal(currentFont(), 9, QFont::Normal);
@@ -74,7 +74,7 @@ void RichDataListItemDelegate::paint(QPainter * painter, const QStyleOptionViewI
 	}
 
 
-	if (bolden_normal)
+	if (bolden_normal && !(option.state & QStyle::State_Selected))
 	{
 		painter->setFont(fontHeadingNormal);
 	}
@@ -98,7 +98,7 @@ void RichDataListItemDelegate::paint(QPainter * painter, const QStyleOptionViewI
 
 	r = option.rect.adjusted(imageSpace, 30, -10, 0);
 
-	if (bolden_normal)
+	if (bolden_normal && !(option.state & QStyle::State_Selected))
 	{
 		painter->setFont(fontDescriptionNormal);
 	}

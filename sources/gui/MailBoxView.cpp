@@ -38,6 +38,8 @@ void MailBoxView::eventMailSelected(QListWidgetItem* item)
 			currentToken = mailLookup[currUID];
 			emit MailSelected(currentToken);
 			mailClientPtr->MarkEmailSeen(currentToken.Storage.GetAccount(), currentToken.Storage.GetDirectory(), currentToken.Storage.GetUid());
+			item->setData(Qt::UserRole + 2, QVariant(false));
+			update();
 		}
 	}
 }

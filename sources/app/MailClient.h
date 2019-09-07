@@ -58,7 +58,7 @@ public:
 	void ShowSplashMessage(QString str);
 	void ShowUI();
 
-	bool FetchConfiguration();
+	bool LoadConfiguration();
 
     bool FetchProfiles();
     bool FetchDirectories();
@@ -85,6 +85,9 @@ public:
 	bool AddContact(Contact& obj);
 	bool UpdateContact(Contact& obj);
 	bool RemoveContact(const std::string& contactId);
+
+	bool SaveConfiguration();
+	bool LoadEmail(std::string& profile, std::string& directory, std::string& uid, Mail& eml);
 
 	std::vector<Profile>* ProfileList() { return  &profiles; }
 	std::vector<std::string>* DirectoryList(std::string dir) { return &directories[dir]; }

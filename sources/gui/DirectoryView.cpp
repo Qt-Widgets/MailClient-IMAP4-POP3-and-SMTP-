@@ -23,9 +23,6 @@ DirectoryView::~DirectoryView()
 
 void DirectoryView::Initialize()
 {
-	mailClientPtr->FetchProfiles();
-	mailClientPtr->FetchDirectories();
-
     for(auto pf : *mailClientPtr->ProfileList())
     {
         QTreeWidgetItem *treeItem = new QTreeWidgetItem(this);

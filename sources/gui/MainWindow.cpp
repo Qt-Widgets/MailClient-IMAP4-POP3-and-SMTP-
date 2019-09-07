@@ -117,9 +117,12 @@ void MainWindow::eventMailSelected(MailInfo minfo)
 
 	Mail eml;
 
-	std::string eml_dir;
+	std::string current_dir, parent_dir, eml_dir, profile_dir;
 
-	eml_dir = mailClientPtr->KeyValue("emaildirectory");
+	dircurrentdirectory(current_dir);
+	dirgetparentdirectory(current_dir, parent_dir);
+
+	eml_dir = parent_dir + "/emails/";
 
 	eml_dir += "/";
 	eml_dir += minfo.Storage.GetAccount();

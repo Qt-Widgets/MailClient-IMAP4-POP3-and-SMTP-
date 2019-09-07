@@ -83,7 +83,7 @@ public:
 	bool				connected;
 	unsigned long		socketFd;
 	sockaddr_in			serverAddress;
-	std::string 		serverName;
+	char*		 		serverName;
 	int					serverPort;
 	size_t				preFetchedBufferSize;
 	unsigned char*		preFetchedBuffer;
@@ -111,6 +111,7 @@ TcpClient::TcpClient()
 	implStructPtr->preFetchedBuffer = nullptr;
 	implStructPtr->packetSize = 0;
 	implStructPtr->packet = nullptr;
+	implStructPtr->serverName = nullptr;
 	implStructPtr->requireSSL = false;
 	implStructPtr->phv = Undefined;
 
@@ -131,6 +132,7 @@ TcpClient::TcpClient(int inSocket, bool requireSSL)
 	implStructPtr->preFetchedBuffer = nullptr;
 	implStructPtr->packetSize = 0;
 	implStructPtr->packet = nullptr;
+	implStructPtr->serverName = nullptr;
 	implStructPtr->requireSSL = requireSSL;
 	implStructPtr->phv = Undefined;
 
@@ -157,6 +159,11 @@ TcpClient::~TcpClient()
 		delete implStructPtr->packet;
 	}
 
+	if (implStructPtr->serverName != nullptr)
+	{
+		delete implStructPtr->serverName;
+	}
+
 	delete implStructPtr;
 }
 
@@ -174,7 +181,10 @@ void TcpClient::SetPacketLength(long len)
 
 bool TcpClient::CreateSocket(const char* servername, int serverport, bool reqSSL)
 {
-	implStructPtr->serverName = servername;
+	implStructPtr->serverName = new char[strlen(servername) + 1];
+	memset(implStructPtr->serverName, 0, strlen(servername) + 1);
+	strcpy(implStructPtr->serverName, servername);
+
 	implStructPtr->serverPort = serverport;
 	implStructPtr->requireSSL = reqSSL;
 
@@ -189,7 +199,7 @@ bool TcpClient::CreateSocket(const char* servername, int serverport, bool reqSSL
 
 	if (!ip)
 	{
-		hostent* pHE = gethostbyname(implStructPtr->serverName.c_str());
+		hostent* pHE = gethostbyname(implStructPtr->serverName);
 		if (pHE == 0)
 		{
 			nRemoteAddr = INADDR_NONE;
@@ -200,7 +210,7 @@ bool TcpClient::CreateSocket(const char* servername, int serverport, bool reqSSL
 	}
 	else
 	{
-		inet_pton(AF_INET, implStructPtr->serverName.c_str(), &implStructPtr->serverAddress.sin_addr);
+		inet_pton(AF_INET, implStructPtr->serverName, &implStructPtr->serverAddress.sin_addr);
 	}
 
 	if (implStructPtr->requireSSL)

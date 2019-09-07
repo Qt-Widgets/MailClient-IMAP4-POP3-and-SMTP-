@@ -21,9 +21,9 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	
-	app->FetchConfiguration();
-	//app->FetchProfiles();
-	//app->FetchDirectories();
+	app->LoadConfiguration();
+	app->FetchProfiles();
+	app->FetchDirectories();
 	app->ShowSplashMessage("Initializing main window");
 
 	if(!app->InitializeUI())
