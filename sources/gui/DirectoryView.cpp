@@ -126,14 +126,13 @@ void DirectoryView::eventDirectorySelected(QTreeWidgetItem *item, int column)
     if(tokens.size() > 1)
     {
 		std::vector<MailHeader> mails;
-		std::vector<MailStorageInformation> sinfo;
 
 		std::string profile_name = tokens[0];
 		std::string dir_name = tokens[1];
 
-		if (mailClientPtr->GetEmails(profile_name, dir_name, mails, sinfo))
+		if (mailClientPtr->GetEmails(profile_name, dir_name, mails))
 		{
-			emit MailListRecieved(mails, sinfo);
+			emit MailListRecieved(mails);
 		}
     }
 }
@@ -201,12 +200,11 @@ void DirectoryView::Refresh()
 	if (tokens.size() > 1)
 	{
 		std::vector<MailHeader> mails;
-		std::vector<MailStorageInformation> sinfo;
 
 		std::string profile_name = tokens[0];
 		std::string dir_name = tokens[1];
-		mailClientPtr->GetEmails(profile_name, dir_name, mails, sinfo);
-		emit MailListRecieved(mails, sinfo);
+		mailClientPtr->GetEmails(profile_name, dir_name, mails);
+		emit MailListRecieved(mails);
 	}
 }
 
@@ -263,7 +261,6 @@ void DirectoryView::Search(std::string searchterm)
 	if (tokens.size() > 1)
 	{
 		std::vector<MailHeader> mails;
-		std::vector<MailStorageInformation> sinfo;
 
 		std::string profile_name = tokens[0];
 		std::string dir_name = tokens[1];
@@ -272,13 +269,13 @@ void DirectoryView::Search(std::string searchterm)
 
 		if (searchterm.length() > 0)
 		{
-			mailClientPtr->GetEmailsByTerm(profile_name, dir_name, searchterm, mails, sinfo);
+			mailClientPtr->GetEmailsByTerm(profile_name, dir_name, searchterm, mails);
 		}
 		else
 		{
-			mailClientPtr->GetEmails(profile_name, dir_name, mails, sinfo);
+			mailClientPtr->GetEmails(profile_name, dir_name, mails);
 		}
 
-		emit MailListRecieved(mails, sinfo);
+		emit MailListRecieved(mails);
 	}
 }

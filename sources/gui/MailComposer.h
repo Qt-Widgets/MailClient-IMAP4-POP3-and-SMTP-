@@ -81,7 +81,6 @@ private:
 	ContactsView contacts;
 
 	Mail		email;
-	MailStorageInformation minfo;
 };
 
 #endif

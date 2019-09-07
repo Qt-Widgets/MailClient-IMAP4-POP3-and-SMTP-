@@ -68,10 +68,10 @@ public:
 	bool AddProfile(Profile& obj);
 	bool UpdateProfile(Profile& obj);
 	bool RemoveProfile(std::string& str);
-	bool SendEmail(Mail& eml, MailStorageInformation &stg);
+	bool SendEmail(Mail& eml);
 	bool GetAccountDirectories(std::string& profilename, std::vector<std::string>& resplines);
-	bool GetEmails(std::string& profilename, std::string& dirname, std::vector<MailHeader>& mails, std::vector<MailStorageInformation>& stgl);
-	bool GetEmailsByTerm(std::string& profilename, std::string& dirname, std::string& term, std::vector<MailHeader>& mails, std::vector<MailStorageInformation>& stgl);
+	bool GetEmails(std::string& profilename, std::string& dirname, std::vector<MailHeader>& mails);
+	bool GetEmailsByTerm(std::string& profilename, std::string& dirname, std::string& term, std::vector<MailHeader>& mails);
 	bool GetEmailHeader(std::string& profilename, std::string& dirname, std::string& uid);
 	bool GetEmailBody(std::string& profilename, std::string& dirname, std::string& uid);
 	bool RemoveEmail(std::string& profilename, std::string& dirname, std::string& uid, std::string& messageid);

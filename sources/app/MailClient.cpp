@@ -268,11 +268,11 @@ bool MailClient::RemoveProfile(std::string &str)
 	return false;
 }
 
-bool MailClient::SendEmail(Mail &eml, MailStorageInformation &stg)
+bool MailClient::SendEmail(Mail &eml)
 {
 	bool send_success = false;
 
-	Profile pr = profileList[stg.GetAccount()];
+	Profile pr = profileList[eml.Header.GetHeaderValue("Account")];
 
 	std::string current_dir, parent_dir, email_dir, profile_dir;
 
@@ -280,7 +280,7 @@ bool MailClient::SendEmail(Mail &eml, MailStorageInformation &stg)
 	dirgetparentdirectory(current_dir, parent_dir);
 
 	email_dir = parent_dir + "/emails/";
-	profile_dir += email_dir + stg.GetAccount();
+	profile_dir += email_dir + pr.ProfileName;
 
 	std::string eml_out_dir;
 	eml_out_dir += profile_dir;
@@ -373,7 +373,7 @@ bool MailClient::GetAccountDirectories(std::string &profilename, std::vector<std
 	return false;
 }
 
-bool MailClient::GetEmails(std::string &profilename, std::string &dirname, std::vector<MailHeader> &mails, std::vector<MailStorageInformation>& stgl)
+bool MailClient::GetEmails(std::string &profilename, std::string &dirname, std::vector<MailHeader> &mails)
 {
 	Profile pf = profileList[profilename];
 
@@ -395,26 +395,24 @@ bool MailClient::GetEmails(std::string &profilename, std::string &dirname, std::
 				for (auto rec : records)
 				{
 					MailHeader hdr;
-					MailStorageInformation stg;
 
 					std::vector<std::string> tokens;
 
 					strsplit(rec, tokens, '|');
 
-					stg.SetAccount(tokens[0]);
+					hdr.AddHeader("Account", tokens[0]);
 					hdr.SetMessageId(tokens[1]);
-					stg.SetUid(tokens[2]);
+					hdr.AddHeader("UID", tokens[0]);
 					hdr.SetSubject(tokens[3]);
 					hdr.SetFrom(tokens[4]);
 					hdr.AddtoToList(tokens[5]);
 					hdr.AddtoCcList(tokens[6]);
 					hdr.AddtoBccList(tokens[7]);
-					stg.SetDirectory(tokens[8]);
-					stg.SetStatus(tokens[9]);
+					hdr.AddHeader("Directory", tokens[0]);
+					hdr.AddHeader("Status", tokens[0]);
 					hdr.SetTimeStamp(tokens[10]);
 
 					mails.push_back(hdr);
-					stgl.push_back(stg);
 				}
 				
 				return true;
@@ -425,7 +423,7 @@ bool MailClient::GetEmails(std::string &profilename, std::string &dirname, std::
 	return true;
 }
 
-bool MailClient::GetEmailsByTerm(std::string& profilename, std::string& dirname, std::string& term, std::vector<MailHeader>& mails, std::vector<MailStorageInformation>& stgl)
+bool MailClient::GetEmailsByTerm(std::string& profilename, std::string& dirname, std::string& term, std::vector<MailHeader>& mails)
 {
 	Profile pf = profileList[profilename];
 
@@ -446,26 +444,24 @@ bool MailClient::GetEmailsByTerm(std::string& profilename, std::string& dirname,
 				for (auto rec : records)
 				{
 					MailHeader hdr;
-					MailStorageInformation stg;
 
 					std::vector<std::string> tokens;
 
 					strsplit(rec, tokens, '|');
 
-					stg.SetAccount(tokens[0]);
+					hdr.AddHeader("Account", tokens[0]);
 					hdr.SetMessageId(tokens[1]);
-					stg.SetUid(tokens[2]);
+					hdr.AddHeader("UID", tokens[0]);
 					hdr.SetSubject(tokens[3]);
 					hdr.SetFrom(tokens[4]);
 					hdr.AddtoToList(tokens[5]);
 					hdr.AddtoCcList(tokens[6]);
 					hdr.AddtoBccList(tokens[7]);
-					stg.SetDirectory(tokens[8]);
-					stg.SetStatus(tokens[9]);
+					hdr.AddHeader("Directory", tokens[0]);
+					hdr.AddHeader("Status", tokens[0]);
 					hdr.SetTimeStamp(tokens[10]);
 
 					mails.push_back(hdr);
-					stgl.push_back(stg);
 				}
 
 				return true;
@@ -490,13 +486,13 @@ bool MailClient::GetEmailHeader(std::string &profilename, std::string &dirname, 
 			if (imap.SelectDirectory(dirname))
 			{
 				Mail mail;
-				MailStorageInformation inf;
 
 				if (imap.GetMessageHeader(uid, mail))
 				{
-					inf.SetAccount(pr.ProfileName);
-					inf.SetDirectory(dirname);
-					inf.SetUid(uid);
+					mail.Header.AddHeader("Account", pr.ProfileName);
+					mail.Header.AddHeader("Directory", dirname);
+					mail.Header.AddHeader("UID", uid);
+
 					imap.Logout();
 					return true;
 				}
@@ -521,13 +517,12 @@ bool MailClient::GetEmailBody(std::string &profilename, std::string &dirname, st
 			if (imap.SelectDirectory(dirname))
 			{
 				Mail mail;
-				MailStorageInformation inf;
 
 				if (imap.GetMessageHeader(uid, mail))
 				{
-					inf.SetAccount(pr.ProfileName);
-					inf.SetDirectory(dirname);
-					inf.SetUid(uid);
+					mail.Header.AddHeader("Account", pr.ProfileName);
+					mail.Header.AddHeader("Directory", dirname);
+					mail.Header.AddHeader("UID", uid);
 
 					imap.GetMessageBody(uid, mail);
 					mail.Body.SetMessageId(mail.Header.GetMessageId());
@@ -931,7 +926,6 @@ void mailBoxPoller(MailClient* appPtr)
 				for (std::string str : uidlist)
 				{
 					Mail mail;
-					MailStorageInformation inf;
 
 					if (imap.GetMessageHeader(str, mail))
 					{
@@ -947,11 +941,11 @@ void mailBoxPoller(MailClient* appPtr)
 
 						imap.GetMessageBody(str, mail);
 						mail.Body.SetMessageId(mail.Header.GetMessageId());
-						inf.SetAccount(p.ProfileName);
-						inf.SetDirectory(dir);
-						inf.SetUid(str);
+						mail.Header.AddHeader("Account", p.ProfileName);
+						mail.Header.AddHeader("Directory", dir);
+						mail.Header.AddHeader("UID", str);
 
-						if (appPtr->MailDb()->CreateEmail(mail.Header, inf))
+						if (appPtr->MailDb()->CreateEmail(mail.Header))
 						{
 							MailStorage stg;
 							stg.StoreMail(storage_dir, mail);

@@ -60,7 +60,7 @@ protected slots:
     void eventProfileUpdated(std::string profile_name);
     void eventProfileRemoved(std::string profile_name);
 
-	void eventMailSelected(MailInfo emlhdr);
+	void eventMailSelected(MailHeader emlhdr);
 	void eventMailFinished();
 
 private:

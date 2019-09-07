@@ -121,29 +121,6 @@ private:
     std::map<std::string, std::string> headers;
 };
 
-class MailStorageInformation
-{
-public:
-
-    MailStorageInformation();
-    MailStorageInformation(const MailStorageInformation &other);
-    ~MailStorageInformation();
-    void operator=(const MailStorageInformation& other);
-    void SetDirectory(std::string dir);
-    void SetStatus(std::string st);
-    void SetAccount(std::string ac);
-    void SetUid(std::string uid);
-    std::string GetDirectory();
-    std::string GetStatus();
-    std::string GetAccount();
-    std::string GetUid();
-private:
-    std::string directory;
-    std::string status;
-    std::string account;
-    std::string UID;
-};
-
 class Mail
 {
 public:

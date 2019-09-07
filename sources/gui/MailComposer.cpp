@@ -74,7 +74,7 @@ void MailComposer::LoadProfiles()
 	if (mailClientPtr->ProfileList()->size() == 1)
 	{
 		email.Header.SetFrom((*mailClientPtr->ProfileList())[0].EMailId);
-		minfo.SetAccount((*mailClientPtr->ProfileList())[0].ProfileName);
+		email.Header.AddHeader("Account", (*mailClientPtr->ProfileList())[0].ProfileName);
 	}
 }
 
@@ -134,23 +134,22 @@ void MailComposer::eventSend()
     }
 
 	Mail eml;
-	MailStorageInformation info;
 
 	QString ts = QDateTime::currentDateTime().toString("ddd, dd MMM yyyy hh:mm:ss t");
 
-	QString message_id = QUuid::createUuid().toString(QUuid::WithoutBraces).remove('-') + "@rushpriority.com";
+	QString message_id = QUuid::createUuid().toString(QUuid::WithoutBraces).remove('-') + "@mailclient.com";
 
 	eml.Header.SetTimeStamp(ts.toStdString());
-	info.SetAccount(cbxProfiles.currentData().toString().toStdString());
+	eml.Header.AddHeader("Account", cbxProfiles.currentData().toString().toStdString());
 	eml.Header.SetFrom(cbxProfiles.currentText().toStdString());
 	eml.Header.SetMessageId(message_id.toStdString());
-	info.SetDirectory("Sent");
+	eml.Header.AddHeader("Directory", "Sent");
 	eml.Header.AddtoToList(txtTo.text().toStdString());
 	eml.Header.AddtoCcList(txtCC.text().toStdString());
 	eml.Header.AddtoBccList(txtBCC.text().toStdString());
 	eml.Header.SetSubject(txtSubject.text().toStdString());
-	info.SetStatus("O");
-	info.SetUid("-1");
+	eml.Header.AddHeader("Directory", "O");
+	eml.Header.AddHeader("Directory", "-1");
 
 	MimeNode text_node;
 
@@ -188,7 +187,7 @@ void MailComposer::eventSend()
 
     DisableInputs();
 
-	if (!mailClientPtr->SendEmail(eml, info))
+	if (!mailClientPtr->SendEmail(eml))
 	{
         QMessageBox msgBox;
         msgBox.setWindowTitle("Error");

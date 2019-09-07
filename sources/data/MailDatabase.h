@@ -26,7 +26,7 @@ public:
     bool GetProfiles(std::string &profilelist, std::string profilename);
     bool GetProfiles(std::vector<Profile> &profilelist, std::string profilename);
 
-	bool CreateEmail(MailHeader &hdr, MailStorageInformation &stg);
+	bool CreateEmail(MailHeader &hdr);
 	bool CreateEmail(std::vector <std::string> &fieldlist);
     bool UpdateEmail(std::vector <std::string> &fieldlist, std::string objectid);
 	bool DeleteEmail(std::string& profilename, std::string& directory, std::string& uid);

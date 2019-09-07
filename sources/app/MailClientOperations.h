@@ -25,10 +25,10 @@ public:
 	virtual bool AddProfile(Profile& obj) = 0;
 	virtual bool UpdateProfile(Profile& obj) = 0;
 	virtual bool RemoveProfile(std::string& str) = 0;
-	virtual bool SendEmail(Mail& eml, MailStorageInformation &stg) = 0;
+	virtual bool SendEmail(Mail& eml) = 0;
 	virtual bool GetAccountDirectories(std::string& profilename, std::vector<std::string>& resplines) = 0;
-	virtual bool GetEmails(std::string& profilename, std::string& dirname, std::vector<MailHeader>& mails, std::vector<MailStorageInformation>& stgl) = 0;
-	virtual bool GetEmailsByTerm(std::string& profilename, std::string& dirname, std::string &term, std::vector<MailHeader>& mails, std::vector<MailStorageInformation>& stgl) = 0;
+	virtual bool GetEmails(std::string& profilename, std::string& dirname, std::vector<MailHeader>& mails) = 0;
+	virtual bool GetEmailsByTerm(std::string& profilename, std::string& dirname, std::string &term, std::vector<MailHeader>& mails) = 0;
 	virtual bool GetEmailHeader(std::string& profilename, std::string& dirname, std::string& uid) = 0;
 	virtual bool GetEmailBody(std::string& profilename, std::string& dirname, std::string& uid) = 0;
 	virtual bool RemoveEmail(std::string& profilename, std::string& dirname, std::string& uid, std::string &messageid) = 0;

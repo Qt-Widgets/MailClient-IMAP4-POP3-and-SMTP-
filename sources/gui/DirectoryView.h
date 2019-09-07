@@ -27,7 +27,7 @@ public:
 
 signals:
     void LoadDirectory(std::string uname, std::string dirname, std::string&uidlist);
-	void MailListRecieved(std::vector<MailHeader>& mails, std::vector<MailStorageInformation>& storgaeinfo);
+	void MailListRecieved(std::vector<MailHeader>& mails);
 	void ClearMailView();
 
 private slots:

@@ -37,7 +37,7 @@ void MailBoxView::eventMailSelected(QListWidgetItem* item)
 		{
 			currentToken = mailLookup[currUID];
 			emit MailSelected(currentToken);
-			mailClientPtr->MarkEmailSeen(currentToken.Storage.GetAccount(), currentToken.Storage.GetDirectory(), currentToken.Storage.GetUid());
+			mailClientPtr->MarkEmailSeen(currentToken.GetHeaderValue("Account"), currentToken.GetHeaderValue("Directory"), currentToken.GetHeaderValue("UID"));
 			item->setData(Qt::UserRole + 2, QVariant(false));
 			update();
 		}
@@ -51,7 +51,7 @@ void MailBoxView::eventClearMailView()
 	currentViewItem = nullptr;
 }
 
-void MailBoxView::eventMailListReceived(std::vector<MailHeader>& mlist, std::vector<MailStorageInformation>& storgaeinfo)
+void MailBoxView::eventMailListReceived(std::vector<MailHeader>& mlist)
 {
 	clear();
 	mailLookup.clear();
@@ -61,11 +61,11 @@ void MailBoxView::eventMailListReceived(std::vector<MailHeader>& mlist, std::vec
 
 	for (int index = 0; index < count; index++)
 	{
-		HeaderReceived(mlist[index], storgaeinfo[index]);
+		HeaderReceived(mlist[index]);
 	}
 }
 
-void MailBoxView::HeaderReceived(MailHeader emlhdr, MailStorageInformation& storage)
+void MailBoxView::HeaderReceived(MailHeader emlhdr)
 {
 	std::string temp_timestamp = emlhdr.GetTimeStamp();
 
@@ -99,13 +99,9 @@ void MailBoxView::HeaderReceived(MailHeader emlhdr, MailStorageInformation& stor
 		QListWidgetItem* mailItem = new QListWidgetItem(this);
 		mailItem->setData(Qt::DisplayRole, QVariant(subject));
 		mailItem->setData(Qt::UserRole, QVariant(description));
-		mailItem->setData(Qt::UserRole + 1, QVariant(storage.GetUid().c_str()));
+		mailItem->setData(Qt::UserRole + 1, QVariant(emlhdr.GetHeaderValue("UID").c_str()));
 
-		MailInfo inf;
-		inf.Header = emlhdr;
-		inf.Storage = storage;
-
-		mailLookup[storage.GetUid()] = inf;
+		mailLookup[emlhdr.GetHeaderValue("UID")] = emlhdr;
 	}
 }
 
@@ -126,7 +122,7 @@ void MailBoxView::DeleteCurrent()
 		}
 	}
 
-	if (mailClientPtr->RemoveEmail(currentToken.Storage.GetAccount(), currentToken.Storage.GetDirectory(), currentToken.Storage.GetUid(), currentToken.Header.GetMessageId()))
+	if (mailClientPtr->RemoveEmail(currentToken.GetHeaderValue("Account"), currentToken.GetHeaderValue("Directory"), currentToken.GetHeaderValue("UID"), currentToken.GetMessageId()))
 	{
 		removeItemWidget(currentViewItem);
 		delete currentViewItem;
@@ -153,7 +149,7 @@ void MailBoxView::FlagCurrent()
 
 	std::string flag = "Flagged";
 
-	if (mailClientPtr->FlagEmail(currentToken.Storage.GetAccount(), currentToken.Storage.GetDirectory(), currentToken.Storage.GetUid(), flag))
+	if (mailClientPtr->FlagEmail(currentToken.GetHeaderValue("Account"), currentToken.GetHeaderValue("Directory"), currentToken.GetHeaderValue("UID"), flag))
 	{
 
 	}
@@ -176,7 +172,7 @@ void MailBoxView::MarkAsSeenCurrent()
 		}
 	}
 
-	mailClientPtr->MarkEmailSeen(currentToken.Storage.GetAccount(), currentToken.Storage.GetDirectory(), currentToken.Storage.GetUid());
+	mailClientPtr->MarkEmailSeen(currentToken.GetHeaderValue("Account"), currentToken.GetHeaderValue("Directory"), currentToken.GetHeaderValue("UID"));
 }
 
 void MailBoxView::MoveToNext()
@@ -195,7 +191,7 @@ void MailBoxView::MoveToPrevious()
 	}
 }
 
-MailInfo MailBoxView::GetCurrentToken()
+MailHeader MailBoxView::GetCurrentToken()
 {
 	return currentToken;
 }

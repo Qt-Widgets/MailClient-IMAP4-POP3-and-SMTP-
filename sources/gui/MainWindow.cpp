@@ -111,7 +111,7 @@ void MainWindow::eventAddressBook()
 	addressBook.show();
 }
 
-void MainWindow::eventMailSelected(MailInfo minfo)
+void MainWindow::eventMailSelected(MailHeader emlhdr)
 {
 	MailStorage ms;
 
@@ -125,12 +125,12 @@ void MainWindow::eventMailSelected(MailInfo minfo)
 	eml_dir = parent_dir + "/emails/";
 
 	eml_dir += "/";
-	eml_dir += minfo.Storage.GetAccount();
+	eml_dir += emlhdr.GetHeaderValue("Account");
 	eml_dir += "/";
-	eml_dir += minfo.Storage.GetDirectory();
+	eml_dir += emlhdr.GetHeaderValue("Directory");
 	eml_dir += "/";
 
-	eml.Header = minfo.Header;
+	eml.Header = emlhdr;
 
 	ms.RetrieveMail(eml_dir, eml);
 	eml.DeSerialize();
@@ -155,13 +155,11 @@ void MainWindow::eventForward()
 
 void MainWindow::extendEmail(CompositionMode mode)
 {
-	MailInfo token = mailBoxView.GetCurrentToken();
-	std::string str;
 	Mail eml;
+	eml.Header = mailBoxView.GetCurrentToken();
+	std::string str;
 	MailStorage ms;
 	std::string eml_dir;
-
-	eml.Header = token.Header;
 
 	if (mode == Forward)
 	{
@@ -178,13 +176,13 @@ void MainWindow::extendEmail(CompositionMode mode)
 		str += "RE: ";
 	}
 
-	str += token.Header.GetSubject();
+	str += eml.Header.GetSubject();
 
 	eml_dir = mailClientPtr->KeyValue("emaildirectory");
 	eml_dir += "/";
-	eml_dir += token.Storage.GetAccount();
+	eml_dir += eml.Header.GetHeaderValue("Account");
 	eml_dir += "/";
-	eml_dir += token.Storage.GetDirectory();
+	eml_dir += eml.Header.GetHeaderValue("Directory");
 	eml_dir += "/";
 
 	ms.RetrieveMail(eml_dir, eml);

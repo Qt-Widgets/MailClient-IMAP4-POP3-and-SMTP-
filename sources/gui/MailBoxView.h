@@ -12,13 +12,6 @@
 
 using namespace std;
 
-class MailInfo
-{
-public:
-	MailHeader Header;
-	MailStorageInformation Storage;
-};
-
 class MailBoxView : public RichDataList
 {
 	Q_OBJECT
@@ -34,24 +27,24 @@ public:
 	void FlagCurrent();
 	void MarkAsSeenCurrent();
 
-	MailInfo GetCurrentToken();
+	MailHeader GetCurrentToken();
 
 signals:
-	void MailSelected(MailInfo emlhdr);
+	void MailSelected(MailHeader emlhdr);
 
 public slots:
 	void eventMailSelected(QListWidgetItem* item);
-	void eventMailListReceived(std::vector<MailHeader>& mlist, std::vector<MailStorageInformation>& storgaeinfo);
+	void eventMailListReceived(std::vector<MailHeader>& mlist);
 	void eventClearMailView();
 
 private:
-	void HeaderReceived(MailHeader emlhdr, MailStorageInformation& storage);
+	void HeaderReceived(MailHeader emlhdr);
 
 	MailView* mailViewPtr;
 	QListWidgetItem* currentViewItem;
 
-	MailInfo currentToken;
-	std::map<std::string, MailInfo> mailLookup;
+	MailHeader currentToken;
+	std::map<std::string, MailHeader> mailLookup;
 };
 
 #endif

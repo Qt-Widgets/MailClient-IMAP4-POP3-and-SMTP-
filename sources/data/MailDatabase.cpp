@@ -571,20 +571,20 @@ bool MailDatabase::GetEmails(std::string &emailist, std::string &profilename, st
 	return ret;
 }
 
-bool MailDatabase::CreateEmail(MailHeader& hdr, MailStorageInformation& stg)
+bool MailDatabase::CreateEmail(MailHeader& hdr)
 {
 	std::vector <std::string> fieldlist;
 
-	fieldlist.push_back(stg.GetAccount());
+	fieldlist.push_back(hdr.GetHeaderValue("Account"));
 	fieldlist.push_back(hdr.GetMessageId());
-	fieldlist.push_back(stg.GetUid());
+	fieldlist.push_back(hdr.GetHeaderValue("UID"));
 	fieldlist.push_back(hdr.GetSubject());
 	fieldlist.push_back(hdr.GetFrom());
 	fieldlist.push_back(hdr.GetTo());
 	fieldlist.push_back(hdr.GetCc());
 	fieldlist.push_back(hdr.GetBcc());
-	fieldlist.push_back(stg.GetDirectory());
-	fieldlist.push_back(stg.GetStatus());
+	fieldlist.push_back(hdr.GetHeaderValue("Directory"));
+	fieldlist.push_back(hdr.GetHeaderValue("Status"));
 	fieldlist.push_back(hdr.GetTimeStamp());
 
 	return CreateEmail(fieldlist);
