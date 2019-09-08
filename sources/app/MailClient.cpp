@@ -408,8 +408,8 @@ bool MailClient::GetEmails(std::string &profilename, std::string &dirname, std::
 					hdr.AddtoToList(tokens[5]);
 					hdr.AddtoCcList(tokens[6]);
 					hdr.AddtoBccList(tokens[7]);
-					hdr.AddHeader("Directory", tokens[0]);
-					hdr.AddHeader("Status", tokens[0]);
+					hdr.AddHeader("Directory", tokens[8]);
+					hdr.AddHeader("Status", tokens[9]);
 					hdr.SetTimeStamp(tokens[10]);
 
 					mails.push_back(hdr);
@@ -457,8 +457,8 @@ bool MailClient::GetEmailsByTerm(std::string& profilename, std::string& dirname,
 					hdr.AddtoToList(tokens[5]);
 					hdr.AddtoCcList(tokens[6]);
 					hdr.AddtoBccList(tokens[7]);
-					hdr.AddHeader("Directory", tokens[0]);
-					hdr.AddHeader("Status", tokens[0]);
+					hdr.AddHeader("Directory", tokens[8]);
+					hdr.AddHeader("Status", tokens[9]);
 					hdr.SetTimeStamp(tokens[10]);
 
 					mails.push_back(hdr);
