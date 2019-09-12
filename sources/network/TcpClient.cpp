@@ -6,36 +6,24 @@
 #include <memory.h>
 #endif
 
-#if defined(__gnu_linux__) || defined (__linux__)
-#include <pthread.h>
-#include <string.h>
 #include <errno.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <sys/select.h>
-#endif
-
-#if defined(__unix__)
-#include <pthread.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <netinet/in.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <sys/select.h>
-#endif
-
 #include <stdlib.h>
+
+#if defined(__gnu_linux__) || defined (__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#include <unistd.h>
+#include <pthread.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <sys/select.h>
+#include <fcntl.h>
+#endif
 
 #if defined(_WIN32) || defined(WIN32) || defined (_WIN64) || defined (WIN64)
 #define socklen_t int
@@ -55,7 +43,7 @@
 #define SOCKET_ERROR (-1)
 #endif
 
-#if defined(__unix__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #define socketerror   errno
 #define socketioctl(socket, flag, var) ioctl(socket, flag, (char*)&var)
 #define closesocket(n) close(n) 
