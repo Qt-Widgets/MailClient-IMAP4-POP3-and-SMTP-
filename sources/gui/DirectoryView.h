@@ -21,9 +21,9 @@ public:
 	void Expunge();
 	void Search(std::string searchterm);
 
-    void AddProfile(std::string emailId);
-    void RemoveProfile(std::string emailId);
-    void UpdateProfile(std::string emailId);
+    void AddProfile(std::string profilename, std::string& emailId);
+    void RemoveProfile(std::string profilename, std::string& emailId);
+    void UpdateProfile(std::string profilename, std::string& emailId);
 
 signals:
     void LoadDirectory(std::string uname, std::string dirname, std::string&uidlist);

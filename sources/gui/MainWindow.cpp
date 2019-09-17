@@ -231,22 +231,25 @@ void MainWindow::eventExpunge()
 	directoryView.Expunge();
 }
 
-void MainWindow::eventProfileAdded(std::string profile_name)
+void MainWindow::eventProfileAdded(std::string profile_name, std::string& emailId)
 {
     lblStatusMessage.setText("");
-    directoryView.AddProfile(profile_name);
+    directoryView.AddProfile(profile_name, emailId);
+	appTabs.setCurrentWidget(&appCentralWidget);
 }
 
-void MainWindow::eventProfileUpdated(std::string profile_name)
+void MainWindow::eventProfileUpdated(std::string profile_name, std::string& emailId)
 {
-    directoryView.UpdateProfile(profile_name);
+    directoryView.UpdateProfile(profile_name, emailId);
+	appTabs.setCurrentWidget(&appCentralWidget);
 }
 
-void MainWindow::eventProfileRemoved(std::string profile_name)
+void MainWindow::eventProfileRemoved(std::string profile_name, std::string& emailId)
 {
-    directoryView.RemoveProfile(profile_name);
+    directoryView.RemoveProfile(profile_name, emailId);
     mailBoxView.clear();
     mailView.Reset();
+	appTabs.setCurrentWidget(&appCentralWidget);
 }
 
 void MainWindow::eventMailFinished()

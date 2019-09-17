@@ -4,7 +4,7 @@ project(MailClient)
 
 if(WIN32)
 message("### WARNING: For Windows builds please adjust the Qt5_DIR to the Qt5 CMake configuration path")
-set(Qt5_DIR C:/Qt/5.13.0/msvc2017_64/lib/cmake/Qt5)
+set(Qt5_DIR C:/Qt/5.13.1/msvc2017_64/lib/cmake/Qt5)
 endif()
 
 if(WIN32)

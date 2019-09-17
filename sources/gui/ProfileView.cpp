@@ -205,7 +205,7 @@ void ProfileView::eventRemoveEntry()
         delete currentItem;
         currentItem = nullptr;
 
-		emit ProfileRemoved(currentRecord.ProfileName);
+		emit ProfileRemoved(currentRecord.ProfileName, currentRecord.EMailId);
 
 		btnSave.setEnabled(false);
 		btnRem.setEnabled(false);
@@ -268,13 +268,13 @@ void ProfileView::eventSaveEntry()
             profileItem->setText(1, currentRecord.EMailId.c_str());
             profileItem->setText(2, " ");
             profileItem->setData(0, Qt::UserRole, QVariant(currentRecord.EMailId.c_str()));
-			emit ProfileAdded(currentRecord.ProfileName);
+			emit ProfileAdded(currentRecord.ProfileName, currentRecord.EMailId);
         }
     }
     else
     {
         mailClientPtr->UpdateProfile(currentRecord);
-		emit ProfileUpdated(currentRecord.ProfileName);
+		emit ProfileUpdated(currentRecord.ProfileName, currentRecord.EMailId);
 	}
 
 	close();

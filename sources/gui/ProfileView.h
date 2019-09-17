@@ -31,9 +31,9 @@ public:
     void Initialize();
 
 signals:
-	void ProfileAdded(std::string &profilename);
-	void ProfileUpdated(std::string &profilename);
-	void ProfileRemoved(std::string &profilename);
+	void ProfileAdded(std::string &profilename, std::string& emailId);
+	void ProfileUpdated(std::string &profilename, std::string& emailId);
+	void ProfileRemoved(std::string &profilename, std::string& emailId);
 
 private slots:
     void eventProfileSelected(QTreeWidgetItem *item, int column);

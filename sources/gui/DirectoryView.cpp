@@ -137,18 +137,25 @@ void DirectoryView::eventDirectorySelected(QTreeWidgetItem *item, int column)
     }
 }
 
-void DirectoryView::AddProfile(std::string profile_name)
+void DirectoryView::AddProfile(std::string profile_name, std::string& emailId)
 {
     QTreeWidgetItem *treeItem = new QTreeWidgetItem(this);
+	QString str;
+	str += profile_name.c_str();
+	str += " (";
+	str += emailId.c_str();
+	str += ")";
 
-    treeItem->setText(0, profile_name.c_str());
-    treeItem->setData(0, Qt::UserRole, QVariant(profile_name.c_str()));
+	treeItem->setText(0, str);
+	treeItem->setData(0, Qt::UserRole, QVariant(profile_name.c_str()));
+	treeItem->setData(0, Qt::UserRole + 1, QVariant(emailId.c_str()));
+	treeItem->setExpanded(true);
 
 	std::vector<std::string>* dirlist = mailClientPtr->DirectoryList(profile_name);
 	InitializeDirectoryList(profile_name, *dirlist);
 }
 
-void DirectoryView::RemoveProfile(std::string profile_name)
+void DirectoryView::RemoveProfile(std::string profile_name, std::string& emailId)
 {
     QTreeWidgetItem *item = nullptr;
     int i = 0;
@@ -172,7 +179,7 @@ void DirectoryView::RemoveProfile(std::string profile_name)
     }
 }
 
-void DirectoryView::UpdateProfile(std::string profile_name)
+void DirectoryView::UpdateProfile(std::string profile_name, std::string& emailId)
 {
 
 }

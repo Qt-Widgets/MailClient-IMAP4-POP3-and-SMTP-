@@ -56,9 +56,9 @@ protected slots:
     void eventRefresh();
 	void eventExpunge();
 
-    void eventProfileAdded(std::string profile_name);
-    void eventProfileUpdated(std::string profile_name);
-    void eventProfileRemoved(std::string profile_name);
+    void eventProfileAdded(std::string profile_name, std::string& emailId);
+    void eventProfileUpdated(std::string profile_name, std::string& emailId);
+    void eventProfileRemoved(std::string profile_name, std::string& emailId);
 
 	void eventMailSelected(MailHeader emlhdr);
 	void eventMailFinished();
