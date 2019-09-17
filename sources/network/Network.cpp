@@ -71,7 +71,6 @@ int errno;
 #endif
 #endif
 
-
 Network networkselfinit;
 
 struct timeval	timeout;
