@@ -1,2 +1,2 @@
 # MailClient
-Basic IMAP4 and SMTP 
+Basic IMAP4, POP3 and SMTP with a lightweight Qt frontend
